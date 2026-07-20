@@ -1,0 +1,10 @@
+# SDD decisions
+
+## 2026-07-20 — Alcance de la semilla histórica Champions
+
+- Se usará la UEFA Champions League 2025-26 como semilla histórica de referencia.
+- El alcance empieza en la fase liga y termina en la final; se excluyen las rondas de clasificación.
+- TheSportsDB es la fuente de trazabilidad acordada. La página de temporada indicada por el usuario es la referencia de comprobación.
+- Los bombos serán los cuatro grupos oficiales UEFA de la fase liga 2025-26, publicados por UEFA el 28 de agosto de 2025.
+- Se versionará una semilla reproducible y trazable, en lugar de depender de una consulta de red en cada build.
+- La constitución inicial ratifica Python + web estática, TDD con unittest, trazabilidad de datos, privacidad y UI dirigida por datos para esta entrega automática.
