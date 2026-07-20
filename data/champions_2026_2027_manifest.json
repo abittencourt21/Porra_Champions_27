@@ -1,0 +1,14 @@
+{
+  "competition": "UEFA Champions League",
+  "season": "2026-2027",
+  "status": "waiting_for_official_league_phase_draw",
+  "league_phase_draw_date": "2026-08-27",
+  "known_matchdays": [
+    "2026-09-08/10", "2026-10-13/14", "2026-10-20/21", "2026-11-03/04",
+    "2026-11-24/25", "2026-12-08/09", "2027-01-19/20", "2027-01-27"
+  ],
+  "source_uefa_calendar_url": "https://www.uefa.com/uefachampionsleague/news/02a6-20d57cfcd03e-407c22a7f465-1000--2026-27-champions-league-teams-dates-draws-format-final/",
+  "source_uefa_pots_url": "",
+  "source_uefa_fixtures_url": "",
+  "source_sportsdb_url": "https://www.thesportsdb.com/season/4480-uefa-champions-league/2026-2027"
+}

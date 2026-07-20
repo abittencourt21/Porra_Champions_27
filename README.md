@@ -42,6 +42,23 @@ $py = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
 
 Después sirve `public/` con cualquier servidor estático y abre `index.html`.
 
+## Preparar 2026/27
+
+El [manifiesto de 2026/27](data/champions_2026_2027_manifest.json) deja
+registradas las fechas oficiales conocidas y las dos URLs que deben completarse
+tras el sorteo UEFA de la fase liga (27 de agosto de 2026): publicación de
+bombos y publicación de calendario. Hasta entonces este comando debe fallar de
+forma explícita y `data/seed.json` no se modifica:
+
+```powershell
+$env:PYTHONPATH = "src"
+& $py -m porra_mundial.prepare_champions_season --manifest data/champions_2026_2027_manifest.json
+```
+
+Cuando ambas URLs sean oficiales, se captura su HTML, se genera una semilla
+candidata en una ruta nueva, se revisa y solo entonces se sustituye la semilla
+activa mediante un cambio versionado.
+
 ## Estructura
 
 - `data/seed.json`: semilla histórica trazable.

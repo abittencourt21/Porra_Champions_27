@@ -28,3 +28,10 @@
 - automation: el workflow elimina la configuración específica del Mundial y conserva una ejecución diaria de Pages.
 - decision: las fechas, formulario y pagos de 2026/27 se mantienen pendientes de una convocatoria explícita; no se deducen del histórico.
 - blocker: none
+
+## Follow-up 2026/27 — 2026-07-20
+
+- status: prepared
+- evidence: UEFA fija el sorteo de la fase liga para el 27-08-2026; a fecha de preparación no están publicadas las URLs de bombos ni calendario de los 36 clubes.
+- guardrail: existe un manifiesto de temporada y una validación que falla de forma explícita sin ambas fuentes UEFA; la semilla 2025/26 no se sobrescribe.
+- next trigger: completar las dos URLs oficiales tras el sorteo, capturar el HTML y generar una semilla candidata para revisión.
