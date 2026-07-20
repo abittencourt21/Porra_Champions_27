@@ -48,7 +48,7 @@ def score_participant(
         for team, score in team_scores.items():
             if team not in (match.home_team, match.away_team):
                 continue
-            if match.ronda in {GROUP_ROUND, CHAMPIONS_GROUP_STAGE_ROUND}:
+            if match.ronda in {GROUP_ROUND, CHAMPIONS_GROUP_STAGE_ROUND} or match.ronda.startswith("J"):
                 if match.ronda == "R32":
                     continue
                 gf, gc = _goals_for_team(match, team, use_90=False)

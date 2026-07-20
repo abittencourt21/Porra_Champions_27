@@ -26,6 +26,7 @@ class Match:
     away_score_90: int | None = None
     pasa: str | None = None
     status: str = "NS"
+    source_url: str = ""
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> "Match":
@@ -44,6 +45,7 @@ class Match:
             away_score_90=raw.get("away_score_90"),
             pasa=raw.get("pasa"),
             status=raw.get("status", "NS"),
+            source_url=raw.get("source_url", ""),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -62,6 +64,7 @@ class Match:
             "away_score_90": self.away_score_90,
             "pasa": self.pasa,
             "status": self.status,
+            "source_url": self.source_url,
         }
 
 

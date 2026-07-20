@@ -45,6 +45,17 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(scored["desglose"]["grupos"], 4)
         self.assertEqual(scored["puntos_total"], 4)
 
+    def test_champions_league_matchday_scores_as_league_phase(self):
+        participant = {"alias": "Ana", "equipos": ["Espana", "Brasil", "Marruecos", "Japon"]}
+        matches = [{
+            "matchid": 1, "ronda": "J01", "fecha": "16.09.2025",
+            "home_team": "Espana", "away_team": "Italia", "home_score": 2, "away_score": 1,
+        }]
+
+        scored = score_participant(participant, matches, _bombos(), {"ultima_actualizacion": ""})
+
+        self.assertEqual(scored["desglose"]["grupos"], 3)
+
     def test_playoff_uses_90_minute_score_and_pass_bonus(self):
         participant = {
             "alias": "Ana",

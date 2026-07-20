@@ -191,6 +191,7 @@ fetch("datos.json")
 function normalizePayload(data) {
   return {
     meta: data.meta || {},
+    bombos: data.bombos || {},
     participantes: data.participantes || data.participants || [],
     partidos: (data.partidos || data.matches || []).map(normalizeMatch),
     goleadores: data.goleadores || [],
@@ -695,7 +696,7 @@ function selectionToolbar(groups) {
 }
 
 function renderKnockouts() {
-  const matches = DATA.partidos.filter((match) => match.ronda && match.ronda !== "grupos");
+  const matches = DATA.partidos.filter((match) => SCORED_KO_ROUNDS.has(match.ronda));
   if (!matches.length) return `<div class="empty">Todavía no hay eliminatorias cargadas.</div>`;
   const rounds = [...new Set(matches.map((match) => match.ronda))].sort((a, b) => (ROUND_ORDER[a] || 99) - (ROUND_ORDER[b] || 99));
   if (!rounds.includes(koRound)) koRound = rounds[0];
@@ -706,6 +707,12 @@ function renderKnockouts() {
 }
 
 function renderGroups() {
+  const leagueMatches = DATA.partidos.filter((match) => String(match.ronda || "").startsWith("J"));
+  if (leagueMatches.length) {
+    const byDate = groupBy(leagueMatches, (match) => match.fecha || "Sin fecha");
+    return `<div class="section-note">Fase liga: 36 clubes, ocho jornadas.</div>${Object.entries(byDate).map(([date, rows]) => `
+      <div class="date-title">${escapeHtml(date)}</div><div class="stack">${rows.map(renderMatchRow).join("")}</div>`).join("")}`;
+  }
   const groups = [...new Set(DATA.partidos.filter((match) => match.group).map((match) => match.group))].sort();
   if (!groups.length) return `<div class="empty">Todavía no hay grupos cargados.</div>`;
   return `
@@ -783,13 +790,15 @@ function renderMatchRow(match) {
 }
 
 function renderBombos() {
+  const source = Object.entries(DATA.bombos || {});
+  const rows = [1, 2, 3, 4].map((pot) => source.filter(([, value]) => Number(value) === pot).map(([team]) => team));
   return `
     <div class="card" style="overflow-x:auto">
       <table style="min-width:640px">
         <thead><tr>${[1, 2, 3, 4].map((bombo) => `<th class="center pot-${bombo}">Bombo ${bombo}</th>`).join("")}</tr></thead>
         <tbody>
-          ${BOMBOS.map((row) => `
-            <tr>${row.map((team, index) => `<td class="left pot-${index + 1}">${teamLabel(team)}</td>`).join("")}</tr>
+          ${Array.from({ length: Math.max(...rows.map((row) => row.length), 0) }, (_, rowIndex) => `
+            <tr>${rows.map((pot, index) => `<td class="left pot-${index + 1}">${teamLabel(pot[rowIndex] || "")}</td>`).join("")}</tr>
           `).join("")}
         </tbody>
       </table>
@@ -940,7 +949,8 @@ function renderRules() {
 
 function computeTeamScores() {
   const teamGroups = teamGroupMap();
-  const teams = CANONICAL_TEAMS.map(({ team, bombo }) => ({
+  const publishedTeams = Object.entries(DATA.bombos || {}).map(([team, bombo]) => ({ team, bombo: Number(bombo) }));
+  const teams = (publishedTeams.length ? publishedTeams : CANONICAL_TEAMS).map(({ team, bombo }) => ({
     team,
     bombo,
     group: teamGroups[cleanTeam(team)] || teamGroups[looseTeamKey(team)] || "",
@@ -959,12 +969,13 @@ function computeTeamScores() {
     [match.home_team, match.away_team].forEach((teamName) => {
       const row = byName[cleanTeam(teamName)] || byName[looseTeamKey(teamName)];
       if (!row) return;
-      const [gf, gc] = goalsFor(match, teamName, match.ronda !== "grupos");
+      const isLeague = match.ronda === "grupos" || String(match.ronda || "").startsWith("J");
+      const [gf, gc] = goalsFor(match, teamName, !isLeague);
       const status = String(match.status || "").toUpperCase();
-      const points = match.ronda !== "grupos" && DRAW_AFTER_90_STATUSES.has(status)
+      const points = !isLeague && DRAW_AFTER_90_STATUSES.has(status)
         ? 1
         : resultPoints(gf, gc);
-      if (match.ronda === "grupos") {
+      if (isLeague) {
         row.grupos += points;
       } else if (SCORED_KO_ROUNDS.has(match.ronda)) {
         row.ko_resultado += points;

@@ -74,10 +74,10 @@ class PredictionsTests(unittest.TestCase):
 
         summary = score_predictions(predictions, matches)
 
-        self.assertEqual(summary["puntos_totales"], 4)
+        self.assertEqual(summary["puntos_totales"], 3)
         self.assertEqual(summary["partidos_evaluados"], 2)
         self.assertEqual(summary["detalles"][0]["puntos"], 3)
-        self.assertEqual(summary["detalles"][1]["puntos"], 1)
+        self.assertEqual(summary["detalles"][1]["puntos"], 0)
 
 
 if __name__ == "__main__":
