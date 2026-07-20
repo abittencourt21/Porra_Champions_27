@@ -19,3 +19,12 @@
 - files: `src/porra_mundial/champions.py`, `src/porra_mundial/models.py`, `src/porra_mundial/scoring.py`, `public/app.js`, `data/seed.json`, `public/datos.json`, tests relacionados.
 - decision: UEFA es la fuente primaria; TheSportsDB queda referenciada como contraste secundario debido a la cobertura limitada del tier gratuito.
 - blocker: none
+
+## T008 — 2026-07-20
+
+- status: complete
+- verification: la UI usa clubes, bombos oficiales y ocho jornadas de fase liga; ya no muestra países anfitriones, grupos del Mundial ni fechas de inscripción inventadas.
+- documentation: README y reglas describen la semilla histórica UEFA 2025/26, la fuente secundaria TheSportsDB y las reglas aplicables al MVP.
+- automation: el workflow elimina la configuración específica del Mundial y conserva una ejecución diaria de Pages.
+- decision: las fechas, formulario y pagos de 2026/27 se mantienen pendientes de una convocatoria explícita; no se deducen del histórico.
+- blocker: none

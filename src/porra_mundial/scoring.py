@@ -117,8 +117,12 @@ def build_datos_json(
     ]
     scored.sort(key=lambda item: (-item["puntos_total"], item["alias"].casefold()))
 
+    public_meta = dict(meta) if isinstance(meta, dict) else {}
+    public_meta.update(tournament.to_dict())
+
     return {
-        "meta": tournament.to_dict(),
+        "meta": public_meta,
+        "bombos": dict(team_bombos),
         "participantes": scored,
         "partidos": [match.to_dict() for match in parsed_matches],
         "goleadores": list(goleadores or []),

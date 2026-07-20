@@ -5,10 +5,8 @@ on:
     branches: ["main"]
   workflow_dispatch:
   schedule:
-    # GitHub Actions usa UTC. Durante el Mundial, Madrid esta en UTC+2.
-    # Ejecuciones: 00:30, 03:30, 06:30 y 08:30 Europe/Madrid.
-    - cron: "30 1,4,6 * * *"
-    - cron: "30 22 * * *"
+    # La semilla histórica es estática; la ejecución diaria mantiene Pages disponible.
+    - cron: "30 4 * * *"
 
 permissions:
   contents: read
@@ -43,8 +41,6 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           GOOGLE_QUINIELAS_RANGE: quinielas!A:Z
           GOOGLE_OVERRIDES_RANGE: overrides!A:Z
-          SPORTSDB_SEASON: "2026"
-          PREVIOUS_DATOS_URL: https://abittencourt21.github.io/porra_mundial_2026/datos.json
           PREDICTIONS_PROFILES_JSON: ${{ secrets.PREDICTIONS_PROFILES_JSON }}
         run: |
           if [ -n "$PREDICTIONS_PROFILES_JSON" ]; then

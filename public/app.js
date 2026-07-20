@@ -2,7 +2,7 @@ const TABS = [
   ["porra", "Clasificación"],
   ["usuario", "Mi usuario"],
   ["reglas", "Reglas"],
-  ["selecciones", "Plantilla"],
+  ["selecciones", "Clubes"],
   ["bombos", "Bombos"],
   ["partidos", "Jornadas"],
   ["elim", "Eliminatorias"],
@@ -127,8 +127,8 @@ const DISPLAY_NAMES = {
   "arabia saudi": "Arabia Saudí",
 };
 const ROUND_LABEL = {
-  grupos: "Grupos",
-  R32: "R. de 32",
+  grupos: "Fase liga",
+  R32: "Play-offs",
   R16: "Octavos",
   QF: "Cuartos",
   SF: "Semifinal",
@@ -462,7 +462,7 @@ function renderParticipant(participant, index) {
       </button>
       <div class="details">
         <div class="breakdown">
-          ${metric("Grupos", breakdown.grupos)}
+          ${metric("Fase liga", breakdown.grupos)}
           ${metric("KO resultado", breakdown.playoffs_resultado)}
           ${metric("KO pase", breakdown.playoffs_pase)}
           ${metric("Bonus", breakdown.bonus_final)}
@@ -489,7 +489,7 @@ function renderTeamData(teamData) {
         <span>${teamLabel(teamData.team, true)}</span>
         <span style="color:${color}">${(teamData.g_pts || 0) + (teamData.ko_pts || 0)}</span>
       </h3>
-      <small>Bombo ${bombo} · Grupos ${teamData.g_pts || 0} · KO ${teamData.ko_pts || 0}</small>
+      <small>Bombo ${bombo} · Fase liga ${teamData.g_pts || 0} · KO ${teamData.ko_pts || 0}</small>
       ${(teamData.rondas_pasadas || []).length ? `<div class="teams">${teamData.rondas_pasadas.map((round) => `<span class="chip">${ROUND_LABEL[round] || round}</span>`).join("")}</div>` : ""}
     </div>
   `;
@@ -510,13 +510,13 @@ function renderSelections() {
       a.team.localeCompare(b.team)
     );
   return `
-    <p class="section-note">Selecciones ordenadas por bombo y grupo. Los puntos muestran lo que aporta cada selección: grupos + resultado de eliminatorias a 90 minutos + bonus de pase por bombo.</p>
+    <p class="section-note">Clubes ordenados por bombo UEFA. Los puntos muestran lo que aporta cada club: fase liga + resultado de eliminatorias a 90 minutos + bonus de pase por bombo.</p>
     ${selectionToolbar(groups)}
     <div class="card">
       <table>
         <thead>
           <tr>
-            <th>#</th><th>Selección</th><th class="center">Bombo</th><th class="center">Grupo</th><th class="num">Grupos</th><th class="num">KO Result.</th><th class="num">KO pase</th><th class="num">Total</th>
+            <th>#</th><th>Club</th><th class="center">Bombo</th><th class="num">Fase liga</th><th class="num">KO Result.</th><th class="num">KO pase</th><th class="num">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -525,7 +525,6 @@ function renderSelections() {
               <td class="dim">${index + 1}</td>
               <td class="team-name">${teamLabel(team.team)}</td>
               <td class="center pot-${team.bombo}">${team.bombo}</td>
-              <td class="center">${escapeHtml(team.group || "-")}</td>
               <td class="num">${team.grupos}</td>
               <td class="num">${team.ko_resultado}</td>
               <td class="num">${team.ko_pase}</td>
@@ -688,9 +687,7 @@ function selectionToolbar(groups) {
     <div class="toolbar">
       <span class="toolbar-label">Bombo</span>
       ${[0, 1, 2, 3, 4].map((bombo) => buttonFilter("bombo", String(bombo), bombo ? String(bombo) : "Todos", String(selectionBombo))).join("")}
-      <span class="toolbar-label" style="margin-left:8px">Fase</span>
-      ${buttonFilter("selection-group", "", "Todos", selectionGroup)}
-      ${groups.map((group) => buttonFilter("selection-group", group, group, selectionGroup)).join("")}
+      ${groups.length ? `<span class="toolbar-label" style="margin-left:8px">Grupo</span>${buttonFilter("selection-group", "", "Todos", selectionGroup)}${groups.map((group) => buttonFilter("selection-group", group, group, selectionGroup)).join("")}` : ""}
     </div>
   `;
 }
@@ -714,7 +711,7 @@ function renderGroups() {
       <div class="date-title">${escapeHtml(date)}</div><div class="stack">${rows.map(renderMatchRow).join("")}</div>`).join("")}`;
   }
   const groups = [...new Set(DATA.partidos.filter((match) => match.group).map((match) => match.group))].sort();
-  if (!groups.length) return `<div class="empty">Todavía no hay grupos cargados.</div>`;
+  if (!groups.length) return `<div class="empty">Todavía no hay partidos de fase liga cargados.</div>`;
   return `
     <div class="groups-grid">
       ${groups.map((group) => renderGroupTable(group)).join("")}
@@ -750,13 +747,13 @@ function renderGroupTable(group) {
 
 function renderMatches() {
   const matches = DATA.partidos
-    .filter((match) => !SCORED_KO_ROUNDS.has(match.ronda) && match.ronda !== "grupos")
+    .filter((match) => String(match.ronda || "").startsWith("J"))
     .filter((match) => !roundFilter || Number(match.roundnumber) === Number(roundFilter));
   const byDate = groupBy(matches, (match) => match.fecha || "Sin fecha");
   return `
     <div class="toolbar">
       <span class="toolbar-label">Jornada</span>
-      ${[0, 1, 2, 3].map((round) => buttonFilter("round", String(round), round ? `J${round}` : "Todas", String(roundFilter))).join("")}
+      ${[0, 1, 2, 3, 4, 5, 6, 7, 8].map((round) => buttonFilter("round", String(round), round ? `J${round}` : "Todas", String(roundFilter))).join("")}
     </div>
     ${matches.length ? Object.entries(byDate).map(([date, rows]) => `
       <div class="date-title">${escapeHtml(date)}</div>
@@ -770,7 +767,7 @@ function renderMatchRow(match) {
   const awayScore = scoreValue(match.away_score_90 ?? match.away_score);
   const score = homeScore === null || awayScore === null ? "vs" : `${homeScore}-${awayScore}`;
   const status = String(match.status || "").toUpperCase();
-  const statusLabel = match.ronda !== "grupos" ? KO_STATUS_LABELS[status] : "";
+  const statusLabel = SCORED_KO_ROUNDS.has(match.ronda) ? KO_STATUS_LABELS[status] : "";
   const location = match.group
     ? `Grupo ${match.group}`
     : match.ronda?.startsWith("J")
@@ -803,7 +800,7 @@ function renderBombos() {
         </tbody>
       </table>
     </div>
-    <p class="section-note" style="margin-top:10px">* Repesca UEFA · ** Repesca intercontinental</p>
+    <p class="section-note" style="margin-top:10px">Bombos oficiales de la fase liga UEFA 2025/26.</p>
   `;
 }
 
@@ -813,14 +810,14 @@ function renderRules() {
       <section class="rules-hero">
         <div>
           <h2>Reglas de la porra</h2>
-          <p>Elige cuatro equipos, uno por bombo, y suma puntos según avancen en la Champions League 2026/27. La clasificación pública muestra el alias de cada participante.</p>
-          <p>Para participar, accede al formulario y elige tus selecciones aquí: <a href="https://forms.gle/YBDFtSPVChP3aSGu5" target="_blank" rel="noopener">Formulario de participación</a>.</p>
+          <p>Elige cuatro clubes, uno por bombo, y suma puntos según sus resultados en la fase liga y eliminatorias. Esta publicación usa la temporada histórica UEFA 2025/26 como referencia verificable.</p>
+          <p>Las fechas, formulario y condiciones de una edición futura se publicarán antes de abrir inscripciones.</p>
         </div>
         <div class="rules-kpi">
           <div><strong>5&euro;</strong><span>Cuota de participación</span></div>
-          <div><strong>4</strong><span>Equipos por persona</span></div>
+          <div><strong>4</strong><span>Clubes por persona</span></div>
           <div><strong>80/20</strong><span>Reparto del bote</span></div>
-          <div><strong>11/06</strong><span>Cierre de registro</span></div>
+          <div><strong>8</strong><span>Jornadas de fase liga</span></div>
         </div>
       </section>
 
@@ -832,14 +829,14 @@ function renderRules() {
           <div class="point-card"><strong>Equipos</strong><span>Un equipo del Bombo 1, 2, 3 y 4.</span></div>
           <div class="point-card"><strong>Finales</strong><span>Campeón, subcampeón y pichichi o Bota de Oro.</span></div>
         </div>
-        <p style="margin-top:12px">El plazo de registro termina el <strong>11/06/2026 a las 20:00 CET</strong>.</p>
+        <p style="margin-top:12px">El cierre de registro se anunciará para cada edición antes de su inicio.</p>
       </section>
 
       <section class="rules-block rules-half">
         <h2>Cuota y premios</h2>
         <ul>
           <li>Cuota de participación: <strong>5 euros</strong>.</li>
-          <li>Pago antes del inicio de la Jornada 2, el <strong>18/06/2026</strong>.</li>
+          <li>La fecha límite de pago se comunicará junto con la convocatoria.</li>
           <li>Si no se paga a tiempo, la quiniela queda anulada.</li>
           <li>El bote se reparte: 80% para el primero y 20% para el segundo.</li>
         </ul>
@@ -847,14 +844,14 @@ function renderRules() {
 
       <section class="rules-block rules-half">
         <h2>Bombos</h2>
-        <p>Cada participante debe elegir una selección de cada bombo. Puedes consultar el listado completo en la pestaña <strong>Bombos</strong>.</p>
+        <p>Cada participante debe elegir un club de cada bombo. Puedes consultar el listado completo en la pestaña <strong>Bombos</strong>.</p>
         <table class="rules-table">
           <thead><tr><th>Bombo</th><th>Elección</th></tr></thead>
           <tbody>
-            <tr><td>Bombo 1</td><td>1 selección</td></tr>
-            <tr><td>Bombo 2</td><td>1 selección</td></tr>
-            <tr><td>Bombo 3</td><td>1 selección</td></tr>
-            <tr><td>Bombo 4</td><td>1 selección</td></tr>
+            <tr><td>Bombo 1</td><td>1 club</td></tr>
+            <tr><td>Bombo 2</td><td>1 club</td></tr>
+            <tr><td>Bombo 3</td><td>1 club</td></tr>
+            <tr><td>Bombo 4</td><td>1 club</td></tr>
           </tbody>
         </table>
       </section>
@@ -870,7 +867,7 @@ function renderRules() {
 
       <section class="rules-block rules-half">
         <h2>Puntos por partido</h2>
-        <p>Tus cuatro selecciones suman puntos por cada partido disputado. En eliminatorias solo cuenta el marcador a los 90 minutos.</p>
+        <p>Tus cuatro clubes suman puntos en las ocho jornadas de fase liga y en eliminatorias. En eliminatorias solo cuenta el marcador a los 90 minutos.</p>
         <div class="points-grid">
           <div class="point-card"><strong>3</strong><span>Victoria</span></div>
           <div class="point-card"><strong>1</strong><span>Empate</span></div>
@@ -882,13 +879,13 @@ function renderRules() {
       <section class="rules-block rules-half">
         <h2>Rondas con bonus</h2>
         <ul>
-          <li>Dieciseisavos de final.</li>
+          <li>Play-offs eliminatorios.</li>
           <li>Octavos de final.</li>
           <li>Cuartos de final.</li>
           <li>Semifinal.</li>
           <li>Final.</li>
         </ul>
-        <p>El bonus se concede al alcanzar cada ronda, antes de jugar el partido.</p>
+        <p>El bonus se concede por cada ronda eliminatoria que el club supera.</p>
       </section>
 
       <section class="rules-block rules-half">
@@ -921,7 +918,7 @@ function renderRules() {
 
       <section class="rules-block rules-half">
         <h2>Pichichi</h2>
-        <p>Para el pichichi cuenta la <strong>Bota de Oro oficial de la UEFA</strong>.</p>
+        <p>El desempate de máximo goleador se aplicará según la estadística oficial UEFA que se publique para cada edición.</p>
         <ul>
           <li>Primero se comparan goles.</li>
           <li>Si hay empate, se comparan asistencias.</li>
@@ -931,15 +928,15 @@ function renderRules() {
 
       <section class="rules-block rules-half">
         <h2>Desempates</h2>
-        <p>Si dos participantes terminan empatados a puntos, se aplicarán los criterios UEFA de desempate: puntos en enfrentamientos directos, diferencia de goles, goles a favor y, si sigue el empate, mejor posición en la fase de grupos o en la ronda previa.</p>
+        <p>Si dos participantes terminan empatados a puntos, se aplicarán los criterios anunciados por la organización antes de la apertura. No se trasladan automáticamente los desempates de clasificación UEFA a la porra.</p>
       </section>
 
       <section class="rules-block rules-full">
         <h2>Resumen rápido</h2>
         <div class="points-grid four">
-          <div class="point-card"><strong>1</strong><span>Resultados de tus selecciones en fase de grupos.</span></div>
-          <div class="point-card"><strong>2</strong><span>Resultados de tus selecciones en eliminatorias a 90 minutos.</span></div>
-          <div class="point-card"><strong>3</strong><span>Bonus por cada ronda que superen tus equipos.</span></div>
+          <div class="point-card"><strong>1</strong><span>Resultados de tus clubes en las ocho jornadas de fase liga.</span></div>
+          <div class="point-card"><strong>2</strong><span>Resultados de tus clubes en eliminatorias a 90 minutos.</span></div>
+          <div class="point-card"><strong>3</strong><span>Bonus por cada ronda que superen tus clubes.</span></div>
           <div class="point-card"><strong>4</strong><span>Bonus finales por campeón, subcampeón y pichichi.</span></div>
         </div>
       </section>

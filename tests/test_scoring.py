@@ -231,6 +231,22 @@ class ScoringTests(unittest.TestCase):
 
         self.assertEqual(payload["participantes"][0]["alias"], "Ana")
 
+    def test_build_datos_json_keeps_traceability_meta_and_pots(self):
+        payload = build_datos_json(
+            [],
+            [],
+            {"Paris Saint-Germain": 1},
+            {
+                "ultima_actualizacion": "2026-07-20T00:00:00Z",
+                "competition": "UEFA Champions League",
+                "source_uefa_url": "https://www.uefa.com/example",
+            },
+        )
+
+        self.assertEqual(payload["bombos"], {"Paris Saint-Germain": 1})
+        self.assertEqual(payload["meta"]["competition"], "UEFA Champions League")
+        self.assertEqual(payload["meta"]["source_uefa_url"], "https://www.uefa.com/example")
+
 
 def _bombos():
     return {
