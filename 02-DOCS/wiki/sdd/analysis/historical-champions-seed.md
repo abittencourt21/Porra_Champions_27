@@ -8,13 +8,13 @@ slug: historical-champions-seed
 
 ## Verdict
 
-GATE: PASS — 0 critical, 0 high, 0 medium. The plan includes the required global constraints and task-local interfaces for delegated work.
+GATE: PASS — 0 critical, 0 high, 0 medium. The amended source hierarchy is covered by the plan and task list; the plan includes the required global constraints and task-local interfaces for delegated work.
 
 ## Requirement coverage
 
 | REQ-ID | Spec requirement | Plan section | Task(s) | Status |
 | --- | --- | --- | --- | --- |
-| R1 | 2025-26 historical seed with traceability | §2–4 | T001–T004 | covered |
+| R1 | 2025-26 historical seed with UEFA-primary traceability | §2–4 | T001–T004 | covered |
 | R2 | League phase to final; no qualifiers | §3–4 | T002–T004 | covered |
 | R3 | Event maps uniquely to source | §3–5 | T002–T003 | covered |
 | R4 | Champions-consistent web without World Cup remnants | §2, §5–6 | T007–T008 | covered |
@@ -29,7 +29,7 @@ No critical, high or medium findings. The plan's §0 Global constraints and the 
 
 ## Constitution compliance
 
-The spec, plan and tasks comply with constitution v1.0.0: they preserve the Python/static-web stack, require traceability, TDD, privacy, data-driven UI and verification. No untraceable task or conflicting principle was found.
+The spec, plan and tasks comply with constitution v1.0.0: they preserve the Python/static-web stack, require UEFA-primary traceability, TDD, privacy, data-driven UI and verification. No untraceable task or conflicting principle was found.
 
 ## Scope and duplication check
 

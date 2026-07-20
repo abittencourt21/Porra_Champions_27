@@ -21,7 +21,7 @@ La aplicación parte de una semilla ficticia correspondiente a otro torneo. Esto
 ## Goals
 
 - La semilla representa los partidos y resultados históricos de la UEFA Champions League 2025-26 desde la fase liga hasta la final.
-- Cada dato histórico publicado puede rastrearse hasta TheSportsDB y la temporada de referencia indicada por el usuario.
+- Cada dato histórico publicado puede rastrearse hasta el calendario/resultados oficiales de UEFA y, cuando exista cobertura, al evento equivalente de TheSportsDB.
 - La experiencia de la porra representa la fase liga y las eliminatorias de la Champions, sin presentar datos ficticios del Mundial.
 - Los 36 clubes de la fase liga se agrupan en los cuatro bombos oficiales UEFA de la temporada 2025-26.
 - El histórico queda claramente identificado como referencia y no se confunde con el futuro calendario operativo 2026-27.
@@ -41,7 +41,7 @@ El organizador necesita validar la porra con un torneo real ya finalizado antes 
 
 - Main path: al generar los datos de la porra, se muestra una temporada histórica de referencia de Champions 2025-26 con todos los encuentros de fase liga y de eliminatorias hasta la final, sus fechas, equipos, estado y marcador disponibles.
 - Main path: la interfaz distingue visualmente la fase liga de cada ronda eliminatoria y deja de presentar conceptos propios del Mundial que no correspondan a Champions.
-- Main path: los datos publicados indican la competición, temporada, fuente y referencia que permiten comprobar su procedencia.
+- Main path: los datos publicados indican la competición, temporada, fuente UEFA, referencia de comprobación y, cuando aplique, la referencia secundaria de TheSportsDB.
 - Edge cases: si la fuente no ofrece un campo necesario o un encuentro de la temporada seleccionada, el dato se conserva como no disponible y se genera un aviso visible; nunca se rellena con un valor inventado.
 - Edge cases: los partidos decididos fuera de los 90 minutos reflejan el resultado de partido y el equipo clasificado cuando la fuente lo permita, sin atribuir un marcador a 90 minutos que no esté confirmado.
 - Edge cases: cada partido de una eliminatoria a doble encuentro se conserva individualmente; la puntuación mantiene el criterio existente de resultado a 90 minutos y concede el pase una sola vez por ronda y club.
@@ -49,7 +49,7 @@ El organizador necesita validar la porra con un torneo real ya finalizado antes 
 
 ## Acceptance criteria
 
-- Given la semilla histórica generada, When se revisan sus metadatos, Then identifican la UEFA Champions League 2025-26, TheSportsDB como fuente y la referencia de temporada proporcionada.
+- Given la semilla histórica generada, When se revisan sus metadatos, Then identifican la UEFA Champions League 2025-26, UEFA como fuente primaria, TheSportsDB como fuente secundaria y las referencias de temporada proporcionadas.
 - Given la lista de partidos histórica, When se filtran sus etapas, Then contiene fase liga y eliminatorias hasta la final, y no contiene partidos de rondas clasificatorias.
 - Given un partido incluido, When se consulta su identificador de fuente, Then puede asociarse de forma unívoca al evento histórico correspondiente de TheSportsDB.
 - Given la web generada con la semilla histórica, When un visitante abre jornadas y eliminatorias, Then ve denominaciones y etapas de Champions coherentes con los datos publicados, sin referencias visibles al Mundial.
@@ -74,3 +74,9 @@ Ninguno para esta entrega. La actualización automática de 2026-27 queda explí
 **Q:** ¿Cómo se resuelven eliminatorias a doble partido y cuánto se adapta la porra?  
 **Decision:** Se conservan los dos partidos y el resultado a 90 minutos de cada uno; el pase se refleja una vez por ronda. Se adapta solo la estructura, textos y selecciones imprescindibles para representar Champions.  
 **Why:** Mantiene el comportamiento de puntuación ya documentado en el proyecto y acota el cambio solicitado a datos reales y formato de competición.
+
+### 2026-07-20 — Fuente primaria de calendario y resultados
+
+**Q:** La API pública de TheSportsDB solo entrega cinco partidos de previas con la clave gratuita; ¿cómo se completa una semilla fase liga → final?  
+**Decision:** UEFA será la fuente primaria del calendario y resultados oficiales 2025-26; TheSportsDB se conserva como fuente secundaria de identificación y contraste cuando haya cobertura.  
+**Why:** El usuario eligió esta alternativa para no construir un histórico incompleto ni introducir datos sin procedencia oficial.

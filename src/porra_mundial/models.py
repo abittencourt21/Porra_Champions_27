@@ -16,10 +16,10 @@ class Match:
     group: str | None
     roundnumber: int | None
     ronda: str
-    competition_stage: str = "league"
     fecha: str
     home_team: str
     away_team: str
+    competition_stage: str = "league"
     home_score: int | None = None
     away_score: int | None = None
     home_score_90: int | None = None
