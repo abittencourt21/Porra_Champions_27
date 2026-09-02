@@ -6,40 +6,31 @@ import re
 from typing import Any
 
 CHAMPIONS_LEAGUE_ID = "4480"
-CHAMPIONS_SEASON = "2025-2026"
+CHAMPIONS_SEASON = "2026-2027"
 UEFA_FIXTURES_URL = (
     "https://www.uefa.com/uefachampionsleague/news/"
-    "029c-1e9a2f63fe2d-ebf9ad643892-1000--2025-26-champions-league-all-the-league-phase-fixtures/"
+    "02a8-2174c9e9019d-f909a77bd77a-1000--2026-27-champions-league-all-the-league-phase-fixtures/"
 )
 UEFA_POTS_URL = (
     "https://www.uefa.com/uefachampionsleague/news/"
-    "029c-1e954c3512ef-8b9c6fa0f83b-1000--champions-league-league-phase-draw-pots-confirmed/"
+    "02a8-21717d0c6cb5-03a9a5ff1552-1000--champions-league-league-phase-draw-pots-confirmed/"
 )
 
 _UEFA_POTS = (
-    (
-        "Paris Saint-Germain", "Real Madrid", "Manchester City", "Bayern München",
-        "Liverpool", "Inter", "Chelsea", "Borussia Dortmund", "Barcelona",
-    ),
-    (
-        "Arsenal", "Leverkusen", "Atlético de Madrid", "Benfica", "Atalanta",
-        "Villarreal", "Juventus", "Frankfurt", "Club Brugge",
-    ),
-    (
-        "Tottenham", "PSV Eindhoven", "Ajax", "Napoli", "Sporting CP", "Olympiacos",
-        "Slavia Praha", "Bodø/Glimt", "Marseille",
-    ),
-    (
-        "Copenhagen", "Monaco", "Galatasaray", "Union Saint-Gilloise", "Qarabağ",
-        "Athletic Club", "Newcastle United", "Pafos", "Kairat Almaty",
-    ),
+    ("Paris Saint-Germain", "Bayern München", "Real Madrid", "Liverpool", "Inter", "Manchester City", "Arsenal", "Barcelona", "Atlético de Madrid"),
+    ("Borussia Dortmund", "Roma", "Sporting CP", "Aston Villa", "Porto", "Manchester United", "Club Brugge", "Real Betis", "PSV Eindhoven"),
+    ("Feyenoord", "Lille", "Bodø/Glimt", "Napoli", "Leipzig", "Villarreal", "Fenerbahçe", "Shakhtar Donetsk", "Galatasaray"),
+    ("Slavia Praha", "Slovan Bratislava", "Stuttgart", "AEK Athens", "LASK", "Como", "Lens", "Viking", "Sabah"),
 )
 
 _UEFA_TEAM_ALIASES = {
     "Paris": "Paris Saint-Germain",
     "Man City": "Manchester City",
-    "Newcastle": "Newcastle United",
-    "Bodø/Glimt": "Bodø/Glimt",
+    "Atleti": "Atlético de Madrid",
+    "B. Dortmund": "Borussia Dortmund",
+    "Man Utd": "Manchester United",
+    "PSV": "PSV Eindhoven",
+    "S. Bratislava": "Slovan Bratislava",
 }
 
 

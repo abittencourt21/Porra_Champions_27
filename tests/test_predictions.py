@@ -10,6 +10,11 @@ class PredictionsTests(unittest.TestCase):
         self.assertEqual(prediction_points(2, 1, 1, 0), 1)
         self.assertEqual(prediction_points(2, 1, 0, 2), 0)
 
+    def test_prediction_points_scales_by_knockout_round(self):
+        self.assertEqual(prediction_points(2, 1, 2, 1, "R32"), 3)
+        self.assertEqual(prediction_points(2, 1, 2, 1, "R16"), 6)
+        self.assertEqual(prediction_points(2, 1, 1, 0, "F"), 5)
+
     def test_build_prediction_windows_uses_monday_to_tuesday_window(self):
         matches = [
             Match(

@@ -60,7 +60,7 @@ def score_participant(
                     if str(match.status or "").upper() in DRAW_AFTER_90_STATUSES
                     else result_points(gf, gc)
                 )
-                reached_round = match.ronda not in reached_rounds[team]
+                reached_round = match.ronda != "R32" and match.ronda not in reached_rounds[team]
                 pts_pase = score.bombo if reached_round else 0
                 score.ko_result_pts += pts_resultado
                 score.ko_pass_pts += pts_pase

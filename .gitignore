@@ -13,6 +13,7 @@ data/quinielas.local.*
 data/overrides.local.*
 public/datos.json
 .env
+public/supabase-config.js
 
 # Credenciales de integraciones
 *.pem

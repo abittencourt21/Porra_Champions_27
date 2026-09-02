@@ -1,0 +1,7 @@
+// Copia este archivo como public/supabase-config.js y completa los valores
+// del panel de Supabase: Project Settings > API. La clave publishable es
+// intencionadamente pública; las políticas RLS son la barrera de seguridad.
+window.PORRA_SUPABASE = {
+  url: "https://TU-PROJECT-REF.supabase.co",
+  publishableKey: "sb_publishable_REEMPLAZAR",
+};

@@ -27,6 +27,7 @@ class Match:
     pasa: str | None = None
     status: str = "NS"
     source_url: str = ""
+    starts_at: str = ""
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> "Match":
@@ -46,6 +47,7 @@ class Match:
             pasa=raw.get("pasa"),
             status=raw.get("status", "NS"),
             source_url=raw.get("source_url", ""),
+            starts_at=raw.get("starts_at", ""),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -65,6 +67,7 @@ class Match:
             "pasa": self.pasa,
             "status": self.status,
             "source_url": self.source_url,
+            "starts_at": self.starts_at,
         }
 
 

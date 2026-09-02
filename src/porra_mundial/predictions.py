@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 
 from .models import Match
@@ -10,18 +10,25 @@ def normalize_email(value: str | None) -> str:
     return (value or "").strip().casefold()
 
 
-def prediction_points(predicted_home: int | None, predicted_away: int | None, actual_home: int | None, actual_away: int | None) -> int:
+PREDICTION_SCALE = {"R32": (3, 1), "R16": (6, 2), "QF": (8, 3), "SF": (10, 4), "F": (12, 5)}
+
+
+def prediction_points(predicted_home: int | None, predicted_away: int | None, actual_home: int | None, actual_away: int | None, ronda: str = "") -> int:
     if predicted_home is None or predicted_away is None or actual_home is None or actual_away is None:
         return 0
     if predicted_home == actual_home and predicted_away == actual_away:
-        return 3
+        return PREDICTION_SCALE.get(ronda, (3, 1))[0]
     if (predicted_home > predicted_away and actual_home > actual_away) or (predicted_home < predicted_away and actual_home < actual_away) or (predicted_home == predicted_away and actual_home == actual_away):
-        return 1
+        return PREDICTION_SCALE.get(ronda, (3, 1))[1]
     return 0
 
 
-def can_edit_prediction(match: Match) -> bool:
-    return (match.home_score is None and match.away_score is None and str(match.status or "").upper() in {"NS", "", "TBD"})
+def can_edit_prediction(match: Match, now: datetime | None = None) -> bool:
+    if match.home_score is not None or match.away_score is not None or str(match.status or "").upper() not in {"NS", "", "TBD"}:
+        return False
+    if not match.starts_at:
+        return False
+    return (now or datetime.now(timezone.utc)) < datetime.fromisoformat(match.starts_at).astimezone(timezone.utc) - timedelta(hours=1)
 
 
 def build_prediction_windows(matches: Iterable[Match]) -> list[dict[str, Any]]:
@@ -115,6 +122,7 @@ def score_predictions(predictions: Iterable[dict[str, Any]], matches: Iterable[M
             int(prediction.get("away_score", 0) or 0),
             match.home_score,
             match.away_score,
+            match.ronda,
         )
         details.append(
             {

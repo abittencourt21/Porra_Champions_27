@@ -82,9 +82,9 @@ class ScoringTests(unittest.TestCase):
         scored = score_participant(participant, matches, _bombos(), {"ultima_actualizacion": ""})
 
         self.assertEqual(scored["desglose"]["playoffs_resultado"], 1)
-        self.assertEqual(scored["desglose"]["playoffs_pase"], 1)
-        self.assertEqual(scored["puntos_total"], 2)
-        self.assertEqual(scored["team_data"][0]["rondas_pasadas"], ["R32"])
+        self.assertEqual(scored["desglose"]["playoffs_pase"], 0)
+        self.assertEqual(scored["puntos_total"], 1)
+        self.assertEqual(scored["team_data"][0]["rondas_pasadas"], [])
 
     def test_reaching_r32_awards_bombo_bonus_before_match_is_played(self):
         participant = {
@@ -113,8 +113,8 @@ class ScoringTests(unittest.TestCase):
         scored = score_participant(participant, matches, _bombos(), {"ultima_actualizacion": ""})
 
         self.assertEqual(scored["desglose"]["playoffs_resultado"], 0)
-        self.assertEqual(scored["desglose"]["playoffs_pase"], 4)
-        self.assertEqual(scored["team_data"][3]["rondas_pasadas"], ["R32"])
+        self.assertEqual(scored["desglose"]["playoffs_pase"], 0)
+        self.assertEqual(scored["team_data"][3]["rondas_pasadas"], [])
 
         scored_duplicate = score_participant(
             participant,
@@ -122,7 +122,7 @@ class ScoringTests(unittest.TestCase):
             _bombos(),
             {"ultima_actualizacion": ""},
         )
-        self.assertEqual(scored_duplicate["desglose"]["playoffs_pase"], 4)
+        self.assertEqual(scored_duplicate["desglose"]["playoffs_pase"], 0)
 
     def test_extra_time_and_penalties_score_as_draws_at_90_minutes(self):
         participant = {
@@ -159,7 +159,7 @@ class ScoringTests(unittest.TestCase):
                 )
 
                 self.assertEqual(scored["desglose"]["playoffs_resultado"], 2)
-                self.assertEqual(scored["desglose"]["playoffs_pase"], 3)
+                self.assertEqual(scored["desglose"]["playoffs_pase"], 0)
 
     def test_third_place_match_does_not_score_or_count_as_round_passed(self):
         participant = {

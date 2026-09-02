@@ -15,3 +15,9 @@
 Repro: la suite esperaba 4 puntos para un pronóstico 0-0 contra un resultado 1-0.
 Cause: el empate pronosticado no acierta el signo del resultado; `prediction_points` devuelve correctamente 0.
 Fix: se corrige la expectativa de la prueba a 3 puntos totales y 0 en ese partido.
+
+## 2026-08-31 - Fuente de datos para Champions 2026/27 (feature: champions-2026-27-migration)
+
+- Se aprueba UEFA como fuente canónica de participantes, bombos, calendario y fases de la temporada 2026/27.
+- TheSportsDB queda limitado a contraste y enriquecimiento visual con escudos; cualquier discrepancia prevalece a favor de UEFA.
+- El bonus de acceso a octavos mantiene el valor del bombo: top 8 directo o ganador del play-off desde 9–24; el play-off no concede puntos propios.

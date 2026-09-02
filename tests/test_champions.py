@@ -15,14 +15,14 @@ class ChampionsCatalogTests(unittest.TestCase):
         pots = uefa_champions_pots()
 
         self.assertEqual(CHAMPIONS_LEAGUE_ID, "4480")
-        self.assertEqual(CHAMPIONS_SEASON, "2025-2026")
+        self.assertEqual(CHAMPIONS_SEASON, "2026-2027")
         self.assertTrue(UEFA_FIXTURES_URL.startswith("https://www.uefa.com/"))
         self.assertTrue(UEFA_POTS_URL.startswith("https://www.uefa.com/"))
         self.assertEqual(len(pots), 36)
         self.assertEqual({pot for pot in pots.values()}, {1, 2, 3, 4})
         self.assertEqual([list(pots.values()).count(pot) for pot in range(1, 5)], [9, 9, 9, 9])
         self.assertEqual(pots["Paris Saint-Germain"], 1)
-        self.assertEqual(pots["Kairat Almaty"], 4)
+        self.assertEqual(pots["Sabah"], 4)
 
     def test_parser_keeps_league_and_knockout_matches_with_uefa_ids(self):
         html = """

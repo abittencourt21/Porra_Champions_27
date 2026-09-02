@@ -1,14 +1,14 @@
 const TABS = [
+  ["reglas", "Reglas"],
   ["porra", "Clasificación"],
   ["usuario", "Mi usuario"],
-  ["reglas", "Reglas"],
   ["selecciones", "Clubes"],
   ["bombos", "Bombos"],
   ["partidos", "Jornadas"],
   ["elim", "Eliminatorias"],
 ];
 
-const BOMBOS = [
+let BOMBOS = [
   ["Estados Unidos", "Croacia", "Noruega", "Jordania"],
   ["Canada", "Marruecos", "Panama", "Cabo Verde"],
   ["Mexico", "Colombia", "Egipto", "Ghana"],
@@ -23,7 +23,7 @@ const BOMBOS = [
   ["Alemania", "Australia", "Sudafrica", "Irak**"],
 ];
 
-const BOMBO_MAP = Object.fromEntries(
+let BOMBO_MAP = Object.fromEntries(
   BOMBOS.flatMap((row) => row.map((team, index) => [cleanTeam(team), index + 1]))
 );
 Object.assign(BOMBO_MAP, {
@@ -42,7 +42,7 @@ Object.assign(BOMBO_MAP, {
   "Turquía": 4,
   "Turquía*": 4,
 });
-const CANONICAL_TEAMS = BOMBOS.flatMap((row) =>
+let CANONICAL_TEAMS = BOMBOS.flatMap((row) =>
   row.map((team, index) => ({ team, bombo: index + 1 }))
 );
 const BOMBO_COL = ["#0057d8", "#00a66a", "#e1253b", "#b88923"];
@@ -147,8 +147,11 @@ const KO_STATUS_LABELS = {
 
 let DATA = null;
 let activeTab = "porra";
-let localUser = null;
-let localPredictions = {};
+let currentUser = null;
+let ownProfile = null;
+let ownEntry = null;
+let ownPredictions = {};
+let supabaseClient = null;
 let localProfiles = [];
 let openAliases = new Set();
 let rankingSearch = "";
@@ -162,17 +165,39 @@ let selectionBombo = 0;
 let selectionGroup = "";
 let groupFilter = "";
 let roundFilter = 0;
+let matchStatusFilter = "all";
 let koRound = "R32";
+let predictionRound = "J01";
+let predictionDrafts = {};
 
 applyTheme(initialTheme());
 
-fetch("datos.json")
+boot();
+
+async function boot() {
+  const config = window.PORRA_SUPABASE;
+  if (config?.url && config?.publishableKey && !config.url.includes("TU-PROJECT")) {
+    supabaseClient = window.supabase.createClient(config.url, config.publishableKey);
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    currentUser = user;
+    if (user) await loadPrivateData();
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      currentUser = session?.user || null;
+      if (currentUser) await loadPrivateData(); else { ownProfile = null; ownPredictions = {}; }
+      if (DATA) render();
+    });
+  }
+  fetch("datos.json")
   .then((response) => {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   })
-  .then((data) => {
+  .then(async (data) => {
     DATA = normalizePayload(data);
+    if (supabaseClient) {
+      const { data: participants } = await supabaseClient.from("public_participants").select("alias, equipos, campeon, subcampeon, pichichi");
+      DATA.participantes = (participants || []).map((row) => ({ ...row, puntos_total: 0, desglose: {} }));
+    }
     openAliases = new Set();
     render();
   })
@@ -187,11 +212,27 @@ fetch("datos.json")
     `;
     document.querySelector("#app").innerHTML = `<div class="empty">Pendiente de generar datos desde GitHub Actions.</div>`;
   });
+}
+
+async function loadPrivateData() {
+  const [{ data: profile }, { data: entry }, { data: predictions }] = await Promise.all([
+    supabaseClient.from("profiles").select("user_id, alias").maybeSingle(),
+    supabaseClient.from("entries").select("*").maybeSingle(),
+    supabaseClient.from("predictions").select("match_id, home_score, away_score, confirmed_at"),
+  ]);
+  ownProfile = profile;
+  ownEntry = entry;
+  ownPredictions = Object.fromEntries((predictions || []).map((row) => [String(row.match_id), row]));
+}
 
 function normalizePayload(data) {
+  const bombos = data.bombos || {};
+  BOMBOS = [1, 2, 3, 4].map((pot) => Object.keys(bombos).filter((team) => Number(bombos[team]) === pot));
+  BOMBO_MAP = Object.fromEntries(Object.entries(bombos).map(([team, pot]) => [cleanTeam(team), Number(pot)]));
+  CANONICAL_TEAMS = BOMBOS.flatMap((row, index) => row.map((team) => ({ team, bombo: index + 1 })));
   return {
     meta: data.meta || {},
-    bombos: data.bombos || {},
+    bombos,
     participantes: data.participantes || data.participants || [],
     partidos: (data.partidos || data.matches || []).map(normalizeMatch),
     goleadores: data.goleadores || [],
@@ -294,6 +335,9 @@ function renderChrome() {
 }
 
 function renderUserExperience() {
+  if (supabaseClient) return renderSecureUserExperience();
+  return `<div class="empty">El acceso seguro está pendiente de configurar por la organización.</div>`;
+  /* Legacy local demo retained below only until the next cleanup pass. */
   const user = localUser || loadStoredUser();
   if (!user) {
     return renderUserRegistration();
@@ -337,6 +381,44 @@ function renderUserExperience() {
   `;
 }
 
+function renderSecureUserExperience() {
+  if (!currentUser) return `
+    <div class="user-shell"><section class="user-card"><p class="eyebrow">Acceso seguro</p><h2>Entra con tu email</h2>
+    <p>Te enviaremos un enlace de acceso. No guardamos contraseñas y tus datos quedan aislados.</p><p class="auth-note">Si no lo ves en unos minutos, revisa la carpeta de Spam o Correo no deseado.</p>
+    <form class="registration-form" data-magic-link-form><label><span>Email</span><input name="email" type="email" required placeholder="usuario@example.com"></label><button class="primary" type="submit">Enviar enlace de acceso</button></form></section></div>`;
+  if (!ownProfile) return `
+    <div class="user-shell"><section class="user-card"><p class="eyebrow">Perfil</p><h2>Elige tu alias</h2>
+    <form class="registration-form" data-secure-profile-form><label><span>Alias</span><input name="alias" required minlength="2" maxlength="32" placeholder="Tu nombre visible"></label><button class="primary" type="submit">Guardar perfil</button></form></section></div>`;
+  if (!ownEntry) return renderSecureEntryForm();
+  const matches = DATA.partidos.filter((match) => match.ronda === predictionRound);
+  const [exactPoints, outcomePoints] = predictionScoreScale(matches[0]?.ronda);
+  const completed = matches.filter((match) => ["FT", "AET", "AOT", "AP", "PEN"].includes(String(match.status || "").toUpperCase()));
+  const roundPoints = completed.reduce((total, match) => total + predictionScorePoints(ownPredictions[String(match.matchid)], match), 0);
+  const exacts = completed.filter((match) => predictionScoreKind(ownPredictions[String(match.matchid)], match) === "exact").length;
+  const outcomes = completed.filter((match) => predictionScoreKind(ownPredictions[String(match.matchid)], match) === "outcome").length;
+  const allPredictionMatches = DATA.partidos.filter((match) => isPredictionRound(match.ronda));
+  const totalPoints = allPredictionMatches.reduce((total, match) => total + predictionScorePoints(ownPredictions[String(match.matchid)], match), 0);
+  const pending = allPredictionMatches.filter((match) => isPredictionOpen(match) && !ownPredictions[String(match.matchid)]).length;
+  const lastSaved = Object.values(ownPredictions).map((prediction) => prediction.confirmed_at).filter(Boolean).sort().at(-1);
+  return `<div class="user-shell"><section class="user-card"><div><p class="eyebrow">Usuario activo</p><h2>${escapeHtml(ownProfile.alias)}</h2><p>${escapeHtml(currentUser.email)}</p></div><button class="secondary" data-secure-sign-out>Salir</button></section>
+    <section class="user-dashboard" aria-label="Resumen de mi porra"><div><span>Puntos totales</span><strong>${totalPoints}</strong></div><div><span>Fase activa</span><strong>${escapeHtml(predictionRoundLabel(predictionRound))}</strong></div><div><span>Pendientes abiertos</span><strong>${pending}</strong></div>${lastSaved ? `<small>Último guardado: ${escapeHtml(formatLocalDateTime(lastSaved))}</small>` : ""}</section>
+    <section class="user-card user-card-alt"><p class="eyebrow">Pronósticos</p><h3>Jornada 1</h3><p>Puedes guardar partidos individuales o todos los que hayas rellenado. El cierre se valida en la base de datos una hora antes.</p>
+      <p class="prediction-legend" aria-label="Puntuación de esta fase"><span>Exacto <strong>${exactPoints} pts</strong></span><span>1X2 <strong>${outcomePoints} pt${outcomePoints === 1 ? "" : "s"}</strong></span></p>
+      <p class="prediction-round-summary"><strong>${roundPoints} pts</strong>${completed.length ? ` · ${exacts} exacto${exacts === 1 ? "" : "s"} · ${outcomes} 1X2` : " · Aún no hay partidos finalizados"}</p>
+      <form class="prediction-form" data-secure-prediction-form>${matches.map((match) => renderPredictionRow(match, ownPredictions[String(match.matchid)])).join("")}<button class="primary" type="submit">Guardar pronósticos rellenados</button></form></section></div>`;
+}
+
+function renderSecureEntryForm() {
+  const optionList = (teams) => teams.map((team) => `<option value="${escapeAttr(team)}">${escapeHtml(team)}</option>`).join("");
+  const allTeams = BOMBOS.flat();
+  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">Inscripción inicial</p><h2>Define tu porra</h2><p>Esta inscripción se bloquea al comenzar la primera jornada.</p><form class="registration-form" data-secure-entry-form>
+    ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><select name="pot_${pot}_team" required><option value="">Elige un equipo</option>${optionList(BOMBOS[pot - 1])}</select></label>`).join("")}
+    <label><span>Campeón</span><select name="champion_team" required><option value="">Elige un equipo</option>${optionList(allTeams)}</select></label>
+    <label><span>Subcampeón</span><select name="runner_up_team" required><option value="">Elige un equipo</option>${optionList(allTeams)}</select></label>
+    <label><span>Pichichi</span><input name="top_scorer" required maxlength="80" placeholder="Nombre del jugador"></label>
+    <button class="primary" type="submit">Confirmar inscripción</button></form></section></div>`;
+}
+
 function renderUserRegistration() {
   return `
     <div class="user-shell">
@@ -369,12 +451,23 @@ function renderUserRegistration() {
 }
 
 function renderPredictionRow(match, existing) {
-  const editable = true;
-  const home = existing?.home_score ?? "";
-  const away = existing?.away_score ?? "";
+  const editable = isPredictionOpen(match);
+  const draft = predictionDrafts[String(match.matchid)] || {};
+  const home = draft.home_score ?? existing?.home_score ?? "";
+  const away = draft.away_score ?? existing?.away_score ?? "";
+  const finished = ["FT", "AET", "AOT", "AP", "PEN"].includes(String(match.status || "").toUpperCase());
+  const points = finished ? predictionScorePoints(existing, match) : null;
+  const scoreKind = finished ? predictionScoreKind(existing, match) : "";
+  const officialHome = Number(match.home_score_90 ?? match.home_score);
+  const officialAway = Number(match.away_score_90 ?? match.away_score);
+  const officialResult = finished && Number.isFinite(officialHome) && Number.isFinite(officialAway)
+    ? `<div class="prediction-result">Resultado: <strong>${officialHome}–${officialAway}</strong></div>`
+    : "";
+  const closingNotice = predictionClosingNotice(match, editable);
   return `
     <div class="prediction-row">
-      <div>
+      <div class="prediction-teams">
+        ${closingNotice}
         <strong>${escapeHtml(match.home_team)}</strong>
         <span>vs</span>
         <strong>${escapeHtml(match.away_team)}</strong>
@@ -383,14 +476,16 @@ function renderPredictionRow(match, existing) {
       <div class="prediction-scores">
         <label>
           <span>Local</span>
-          <input name="match-${match.matchid}-home" type="number" min="0" max="10" value="${home}" />
+          <input name="match-${match.matchid}-home" type="number" min="0" max="10" value="${home}" ${editable ? "" : "disabled"} />
         </label>
         <label>
           <span>Visitante</span>
-          <input name="match-${match.matchid}-away" type="number" min="0" max="10" value="${away}" />
+          <input name="match-${match.matchid}-away" type="number" min="0" max="10" value="${away}" ${editable ? "" : "disabled"} />
         </label>
+        ${officialResult}
       </div>
-      <div class="prediction-status ${editable ? "editable" : "locked"}">${editable ? "Editable" : "Bloqueado"}</div>
+      <div class="prediction-status ${editable ? (existing ? "saved" : "pending") : "locked"}" title="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}" aria-label="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}">${editable ? (existing ? "✓" : "◷") : "🔒"}</div>
+      <div class="prediction-actions">${finished ? `<span class="prediction-points ${scoreKind}" title="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}" aria-label="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}: ${points} puntos">${points}p</span>` : editable ? `<button class="secondary icon-button" type="button" data-random-prediction="${escapeAttr(match.matchid)}" title="Generar marcador aleatorio" aria-label="Generar marcador aleatorio">🎲</button><button class="secondary icon-button" type="button" data-save-prediction="${escapeAttr(match.matchid)}" title="Guardar este partido" aria-label="Guardar este partido" disabled>💾</button>` : ""}</div>
     </div>
   `;
 }
@@ -450,7 +545,7 @@ function renderParticipant(participant, index) {
   const isOpen = openAliases.has(participant.alias);
   const rank = participant.rank_actual || index + 1;
   return `
-    <article class="ranking-card ${isOpen ? "open" : ""}">
+    <article class="ranking-card ${isOpen ? "open" : ""} ${ownProfile?.alias === participant.alias ? "current-user" : ""}">
       <button class="ranking-head" data-open="${escapeAttr(participant.alias)}">
         <div class="rank">${rank}${rankDelta(participant)}</div>
         <div>
@@ -748,16 +843,19 @@ function renderGroupTable(group) {
 function renderMatches() {
   const matches = DATA.partidos
     .filter((match) => String(match.ronda || "").startsWith("J"))
-    .filter((match) => !roundFilter || Number(match.roundnumber) === Number(roundFilter));
+    .filter((match) => !roundFilter || Number(match.roundnumber) === Number(roundFilter))
+    .filter((match) => matchStatusFilter === "all" || (matchStatusFilter === "finished" ? isFinishedMatch(match) : !isFinishedMatch(match)));
   const byDate = groupBy(matches, (match) => match.fecha || "Sin fecha");
   return `
     <div class="toolbar">
       <span class="toolbar-label">Jornada</span>
       ${[0, 1, 2, 3, 4, 5, 6, 7, 8].map((round) => buttonFilter("round", String(round), round ? `J${round}` : "Todas", String(roundFilter))).join("")}
+      <span class="toolbar-label">Estado</span>
+      ${[["all", "Todos"], ["open", "Pendientes"], ["finished", "Finalizados"]].map(([value, label]) => buttonFilter("match-status", value, label, matchStatusFilter)).join("")}
     </div>
     ${matches.length ? Object.entries(byDate).map(([date, rows]) => `
       <div class="date-title">${escapeHtml(date)}</div>
-      <div class="stack">${rows.map(renderMatchRow).join("")}</div>
+      <div class="match-grid">${rows.map(renderMatchRow).join("")}</div>
     `).join("") : `<div class="empty">No hay partidos con esos filtros.</div>`}
   `;
 }
@@ -773,9 +871,12 @@ function renderMatchRow(match) {
     : match.ronda?.startsWith("J")
       ? `Jornada ${match.ronda.replace("J", "")}`
       : ROUND_LABEL[match.ronda] || match.ronda || "";
+  const time = match.starts_at
+    ? new Date(match.starts_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+    : "Hora pendiente";
   return `
     <div class="match-row">
-      <div class="match-date">${escapeHtml(match.fecha || "")}<br>${escapeHtml(location)}</div>
+      <div class="match-date"><strong>${escapeHtml(time)}</strong><br>${escapeHtml(match.fecha || "")}<br>${escapeHtml(location)}</div>
       <div class="home">${teamLabel(match.home_team || "")}</div>
       <div class="result">
         <span>${score}</span>
@@ -806,12 +907,58 @@ function renderBombos() {
 
 function renderRules() {
   return `
+    <div class="rules rules-compact">
+      <section class="rules-hero">
+        <div><h2>Reglas de la porra</h2><p>Inscríbete una vez, confirma tus pronósticos y sigue tus puntos durante la Champions 2026/27.</p></div>
+        <div class="rules-kpi"><div><strong>4</strong><span>Clubes por persona</span></div><div><strong>8</strong><span>Jornadas de liga</span></div><div><strong>−1 h</strong><span>Cierre por partido</span></div></div>
+      </section>
+      <nav class="rules-links" aria-label="Secciones de reglas"><a href="#reglas-inscripcion">Inscripción</a><a href="#reglas-pronosticos">Pronósticos</a><a href="#reglas-puntuacion">Puntuación</a><a href="#reglas-bonus">Bonus</a></nav>
+
+      <section class="rules-block rules-full" id="reglas-inscripcion">
+        <h2>1. Inscripción</h2>
+        <ul><li>Elige un club de cada bombo, campeón, subcampeón y pichichi.</li><li>La inscripción se cierra al comenzar la primera jornada.</li><li>Los datos privados solo los puede consultar y modificar su titular.</li></ul>
+      </section>
+
+      <section class="rules-block rules-full" id="reglas-pronosticos">
+        <h2>2. Pronósticos</h2>
+        <ul><li>Puedes guardar cada partido por separado o varios a la vez.</li><li>El plazo termina una hora antes del inicio oficial, en horario de Madrid.</li><li>Un partido sin pronóstico confirmado a tiempo suma 0 puntos.</li></ul>
+      </section>
+
+      <section class="rules-block rules-full" id="reglas-puntuacion">
+        <h2>3. Puntuación</h2>
+        <h3>Elecciones de equipos</h3>
+        <p>Tus cuatro clubes suman <strong>3 puntos por victoria</strong> y <strong>1 por empate</strong>. También reciben el bonus de su bombo al acabar entre los ocho primeros o al alcanzar octavos desde los puestos 9–24, y por cada ronda superada desde octavos.</p>
+        <table class="rules-table"><thead><tr><th>Bombo original</th><th>Bonus por clasificación o ronda</th></tr></thead><tbody>
+          <tr><td>Bombo 1</td><td>+1 punto</td></tr><tr><td>Bombo 2</td><td>+2 puntos</td></tr><tr><td>Bombo 3</td><td>+3 puntos</td></tr><tr><td>Bombo 4</td><td>+4 puntos</td></tr>
+        </tbody></table>
+        <p><strong>El play-off no concede bonus.</strong> El bonus se concede una vez al acceder a octavos y por cada ronda superada desde entonces.</p>
+        <table class="rules-table"><thead><tr><th>Acierto final</th><th>Puntos</th></tr></thead><tbody>
+          <tr><td>Campeón</td><td>+10</td></tr><tr><td>Subcampeón</td><td>+5</td></tr><tr><td>Pichichi</td><td>+7</td></tr><tr><td>Campeón entre tus cuatro clubes</td><td>+6</td></tr>
+        </tbody></table>
+        <p>El bonus de campeón acertado y el de campeón incluido entre tus cuatro clubes no se acumulan.</p>
+        <h3>Quiniela</h3>
+        <p>Se usa el resultado a los 90 minutos: el marcador exacto recibe la puntuación mayor y el 1X2 acierta victoria local, empate o victoria visitante.</p>
+        <table class="rules-table"><thead><tr><th>Fase</th><th>Exacto</th><th>1X2</th></tr></thead><tbody>
+          <tr><td>Fase liga</td><td>3</td><td>1</td></tr><tr><td>Play-off</td><td>3</td><td>1</td></tr><tr><td>Octavos</td><td>6</td><td>2</td></tr><tr><td>Cuartos</td><td>8</td><td>3</td></tr><tr><td>Semifinal</td><td>10</td><td>4</td></tr><tr><td>Final</td><td>12</td><td>5</td></tr>
+        </tbody></table>
+        <p>La prórroga y los penaltis no cambian el resultado puntuable. Un pronóstico no confirmado o fallado suma 0.</p>
+      </section>
+
+      <section class="rules-block rules-full" id="reglas-bonus">
+        <h2>4. Bonus y clasificación</h2>
+        <ul><li>Los ocho primeros de la fase liga reciben el bonus correspondiente; también los ocho equipos que accedan a octavos desde los puestos 9–24.</li><li>Los bonus de avance empiezan en octavos.</li><li>La clasificación general aplica los criterios UEFA de desempate.</li></ul>
+      </section>
+    </div>`;
+}
+
+function renderRulesLegacy() {
+  return `
     <div class="rules">
       <section class="rules-hero">
         <div>
           <h2>Reglas de la porra</h2>
-          <p>Elige cuatro clubes, uno por bombo, y suma puntos según sus resultados en la fase liga y eliminatorias. Esta publicación usa la temporada histórica UEFA 2025/26 como referencia verificable.</p>
-          <p>Las fechas, formulario y condiciones de una edición futura se publicarán antes de abrir inscripciones.</p>
+          <p>Elige un club de cada bombo, campeón, subcampeón y pichichi; después confirma tus pronósticos partido a partido durante la Champions 2026/27.</p>
+          <p>Cada pronóstico queda bloqueado una hora antes de comenzar el partido.</p>
         </div>
         <div class="rules-kpi">
           <div><strong>5&euro;</strong><span>Cuota de participación</span></div>
@@ -867,19 +1014,24 @@ function renderRules() {
 
       <section class="rules-block rules-half">
         <h2>Puntos por partido</h2>
-        <p>Tus cuatro clubes suman puntos en las ocho jornadas de fase liga y en eliminatorias. En eliminatorias solo cuenta el marcador a los 90 minutos.</p>
-        <div class="points-grid">
-          <div class="point-card"><strong>3</strong><span>Victoria</span></div>
-          <div class="point-card"><strong>1</strong><span>Empate</span></div>
-          <div class="point-card"><strong>0</strong><span>Derrota</span></div>
-        </div>
-        <p style="margin-top:12px">La prórroga y los penaltis no cambian los puntos por resultado. Si tu selección empata a los 90 minutos y gana en penaltis, suma 1 punto por el partido.</p>
+        <p>Solo puntúan los pronósticos confirmados antes del cierre. Se compara el marcador a los 90 minutos: la prórroga y los penaltis no lo modifican.</p>
+        <table class="rules-table">
+          <thead><tr><th>Fase</th><th>Marcador exacto</th><th>1X2</th></tr></thead>
+          <tbody>
+            <tr><td>Fase liga</td><td>3 puntos</td><td>1 punto</td></tr>
+            <tr><td>Play-off</td><td>4 puntos</td><td>1 punto</td></tr>
+            <tr><td>Octavos</td><td>6 puntos</td><td>2 puntos</td></tr>
+            <tr><td>Cuartos</td><td>8 puntos</td><td>3 puntos</td></tr>
+            <tr><td>Semifinal</td><td>10 puntos</td><td>4 puntos</td></tr>
+            <tr><td>Final</td><td>12 puntos</td><td>5 puntos</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:12px">El 1X2 acierta si coincide victoria local, empate o victoria visitante. Si el pronóstico no se confirma o falla, suma 0 puntos.</p>
       </section>
 
       <section class="rules-block rules-half">
         <h2>Rondas con bonus</h2>
         <ul>
-          <li>Play-offs eliminatorios.</li>
           <li>Octavos de final.</li>
           <li>Cuartos de final.</li>
           <li>Semifinal.</li>
@@ -976,7 +1128,7 @@ function computeTeamScores() {
         row.grupos += points;
       } else if (SCORED_KO_ROUNDS.has(match.ronda)) {
         row.ko_resultado += points;
-        if (!row.reachedRounds.has(match.ronda)) {
+        if (match.ronda !== "R32" && !row.reachedRounds.has(match.ronda)) {
           row.reachedRounds.add(match.ronda);
           row.ko_pase += row.bombo;
         }
@@ -1040,6 +1192,117 @@ function standingsWithTiebreak(rows) {
 }
 
 function bindEvents() {
+  const securePredictionForm = document.querySelector("[data-secure-prediction-form]");
+  if (securePredictionForm) {
+    const draftCount = Object.values(predictionDrafts).filter((score) => score.home_score !== undefined || score.away_score !== undefined).length;
+    securePredictionForm.closest(".user-card")?.querySelector("h3")?.replaceChildren(predictionRoundLabel(predictionRound));
+    const availableRounds = [...new Set(DATA.partidos
+      .filter((match) => isPredictionRound(match.ronda))
+      .map((match) => match.ronda))].sort((a, b) => predictionRoundOrder(a) - predictionRoundOrder(b));
+    securePredictionForm.insertAdjacentHTML("afterbegin", `<div class="prediction-rounds" aria-label="Seleccionar fase">${availableRounds.map((round) => `<button class="filter ${predictionRound === round ? "active" : ""}" type="button" data-prediction-round="${escapeAttr(round)}">${escapeHtml(predictionRoundLabel(round))}</button>`).join("")}</div>`);
+    securePredictionForm.insertAdjacentHTML("afterbegin", `<div class="prediction-bulk-actions"><span class="draft-summary" data-draft-summary>${draftCount ? `${draftCount} cambios sin guardar` : "Sin cambios pendientes"}</span><button class="secondary" type="button" data-random-all-predictions title="Generar marcadores aleatorios">🎲 <span>Rellenar jornada</span></button></div>`);
+  }
+  document.querySelectorAll("[data-prediction-round]").forEach((button) => {
+    button.addEventListener("click", () => {
+      predictionRound = button.dataset.predictionRound;
+      render();
+    });
+  });
+  document.querySelectorAll("[data-match-status]").forEach((button) => {
+    button.addEventListener("click", () => {
+      matchStatusFilter = button.dataset.matchStatus;
+      render();
+    });
+  });
+  document.querySelector("[data-random-all-predictions]")?.addEventListener("click", () => {
+    const completed = Array.from(document.querySelectorAll("[data-secure-prediction-form] input:not(:disabled)")).some((input) => input.value !== "");
+    if (completed && !window.confirm("Esto sustituirá los marcadores que ya has escrito. ¿Continuar?")) return;
+    document.querySelectorAll("[data-secure-prediction-form] input:not(:disabled)").forEach((input) => {
+      input.value = String(randomPredictionScore());
+      input.dispatchEvent(new Event("input"));
+    });
+  });
+  document.querySelectorAll("[data-random-prediction]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const matchId = button.dataset.randomPrediction;
+      document.querySelector(`[name="match-${matchId}-home"]`).value = String(randomPredictionScore());
+      document.querySelector(`[name="match-${matchId}-away"]`).value = String(randomPredictionScore());
+      predictionDrafts[matchId] = {
+        home_score: Number(document.querySelector(`[name="match-${matchId}-home"]`).value),
+        away_score: Number(document.querySelector(`[name="match-${matchId}-away"]`).value),
+      };
+      document.querySelector(`[data-save-prediction="${matchId}"]`).disabled = false;
+    });
+  });
+  document.querySelectorAll("[data-secure-prediction-form] input[name^=match-]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const [, matchId, side] = input.name.split("-");
+      predictionDrafts[matchId] ||= {};
+      predictionDrafts[matchId][side === "home" ? "home_score" : "away_score"] = input.value === "" ? "" : Number(input.value);
+      input.closest(".prediction-row")?.classList.add("dirty");
+      const home = document.querySelector(`[name="match-${matchId}-home"]`).value;
+      const away = document.querySelector(`[name="match-${matchId}-away"]`).value;
+      document.querySelector(`[data-save-prediction="${matchId}"]`).disabled = home === "" || away === "";
+      const count = Object.keys(predictionDrafts).length;
+      const summary = document.querySelector("[data-draft-summary]");
+      if (summary) summary.textContent = `${count} cambio${count === 1 ? "" : "s"} sin guardar`;
+    });
+  });
+  document.querySelectorAll("[data-save-prediction]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const matchId = button.dataset.savePrediction;
+      const home = document.querySelector(`[name="match-${matchId}-home"]`)?.value;
+      const away = document.querySelector(`[name="match-${matchId}-away"]`)?.value;
+      if (home === "" || away === "") return alert("Completa los goles local y visitante antes de guardar este partido.");
+      const { error } = await supabaseClient.rpc("save_prediction", {
+        target_match_id: matchId, target_home_score: Number(home), target_away_score: Number(away),
+      });
+      if (error) return alert(`No se pudo guardar el pronóstico: ${error.message}`);
+      await loadPrivateData();
+      render();
+    });
+  });
+  document.querySelector("[data-magic-link-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = event.currentTarget.email.value.trim();
+    const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+    alert(error ? `No se pudo enviar el enlace: ${error.message}` : "Revisa tu correo para acceder.");
+  });
+  document.querySelector("[data-secure-profile-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const alias = event.currentTarget.alias.value.trim();
+    const { error } = await supabaseClient.from("profiles").upsert({ user_id: currentUser.id, alias });
+    if (error) return alert(`No se pudo guardar el perfil: ${error.message}`);
+    await loadPrivateData(); render();
+  });
+  document.querySelector("[data-secure-entry-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const entry = Object.fromEntries(["pot_1_team", "pot_2_team", "pot_3_team", "pot_4_team", "champion_team", "runner_up_team", "top_scorer"].map((key) => [key, form[key].value.trim()]));
+    if (entry.champion_team === entry.runner_up_team) return alert("Campeón y subcampeón deben ser distintos.");
+    const { error } = await supabaseClient.from("entries").insert({ user_id: currentUser.id, ...entry });
+    if (error) return alert(`No se pudo confirmar la inscripción: ${error.message}`);
+    await loadPrivateData(); render();
+  });
+  document.querySelector("[data-secure-sign-out]")?.addEventListener("click", async () => {
+    await supabaseClient.auth.signOut();
+  });
+  document.querySelector("[data-secure-prediction-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const values = {};
+    Array.from(event.currentTarget.elements).forEach((element) => {
+      if (!element.name?.startsWith("match-") || element.value === "") return;
+      const [, matchId, side] = element.name.split("-");
+      values[matchId] ||= {};
+      values[matchId][side] = Number(element.value);
+    });
+    const ready = Object.entries(values).filter(([, score]) => Number.isInteger(score.home) && Number.isInteger(score.away));
+    if (!ready.length) return alert("Completa los goles local y visitante de al menos un partido antes de guardar.");
+    const results = await Promise.all(ready.map(([matchId, score]) => supabaseClient.rpc("save_prediction", { target_match_id: matchId, target_home_score: score.home, target_away_score: score.away })));
+    const error = results.find((result) => result.error)?.error;
+    if (error) return alert(`No se pudieron guardar todos los pronósticos: ${error.message}`);
+    await loadPrivateData(); render();
+  });
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       activeTab = button.dataset.tab;
@@ -1078,6 +1341,7 @@ function bindEvents() {
       if (!predictions[matchId]) predictions[matchId] = {};
       predictions[matchId][field === "home" ? "home_score" : "away_score"] = element.value === "" ? null : Number(element.value);
     });
+    Object.values(predictions).forEach((prediction) => { prediction.confirmed_at = new Date().toISOString(); });
     localStorage.setItem(`porra-demo-predictions-${user.email}`, JSON.stringify(predictions));
     localPredictions[user.email] = predictions;
     render();
@@ -1215,6 +1479,69 @@ function bindEvents() {
   });
 }
 
+function predictionScorePoints(prediction, match) {
+  const kind = predictionScoreKind(prediction, match);
+  if (kind === "miss") return 0;
+  const [exactPoints, outcomePoints] = predictionScoreScale(match.ronda);
+  return kind === "exact" ? exactPoints : outcomePoints;
+}
+
+function predictionScoreKind(prediction, match) {
+  if (!prediction || prediction.home_score === undefined || prediction.away_score === undefined) return "miss";
+  const home = Number(match.home_score_90 ?? match.home_score);
+  const away = Number(match.away_score_90 ?? match.away_score);
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return "miss";
+  const exact = Number(prediction.home_score) === home && Number(prediction.away_score) === away;
+  const outcome = Math.sign(Number(prediction.home_score) - Number(prediction.away_score)) === Math.sign(home - away);
+  return exact ? "exact" : outcome ? "outcome" : "miss";
+}
+
+function predictionScoreScale(round) {
+  const scale = { R32: [3, 1], R16: [6, 2], QF: [8, 3], SF: [10, 4], F: [12, 5] };
+  return scale[round] || [3, 1];
+}
+
+function isFinishedMatch(match) {
+  return ["FT", "AET", "AOT", "AP", "PEN"].includes(String(match.status || "").toUpperCase());
+}
+
+function isPredictionOpen(match) {
+  return Boolean(match.starts_at) && Date.now() < new Date(match.starts_at).getTime() - 60 * 60 * 1000;
+}
+
+function predictionClosingNotice(match, editable) {
+  if (!editable || !match.starts_at) return "";
+  const milliseconds = new Date(match.starts_at).getTime() - 60 * 60 * 1000 - Date.now();
+  if (milliseconds <= 0 || milliseconds > 24 * 60 * 60 * 1000) return "";
+  const hours = Math.floor(milliseconds / (60 * 60 * 1000));
+  const minutes = Math.ceil((milliseconds % (60 * 60 * 1000)) / 60000);
+  return `<span class="prediction-countdown">Cierra en ${hours} h ${minutes} min</span>`;
+}
+
+function formatLocalDateTime(value) {
+  return new Date(value).toLocaleString("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function isPredictionRound(round) {
+  return /^J\d{2}$/.test(String(round || "")) || SCORED_KO_ROUNDS.has(round);
+}
+
+function predictionRoundOrder(round) {
+  if (/^J\d{2}$/.test(String(round || ""))) return Number(String(round).slice(1));
+  return 100 + (ROUND_ORDER[round] || 99);
+}
+
+function predictionRoundLabel(round) {
+  return /^J\d{2}$/.test(String(round || ""))
+    ? `Jornada ${Number(String(round).slice(1))}`
+    : ROUND_LABEL[round] || String(round || "Partidos");
+}
+
+function randomPredictionScore() {
+  const values = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 4, 5];
+  return values[Math.floor(Math.random() * values.length)];
+}
+
 function buttonFilter(kind, value, label, active) {
   return `<button class="filter ${String(active) === String(value) ? "active" : ""}" data-${kind}="${escapeAttr(value)}">${escapeHtml(label)}</button>`;
 }
@@ -1253,7 +1580,10 @@ function teamLabel(team, showCompetitionStatus = false) {
   const display = displayTeamName(cleaned);
   const code = FLAGS[cleaned] || FLAGS[display] || FLAGS[String(team || "")];
   const suffix = String(team || "").includes("**") ? "**" : String(team || "").includes("*") ? "*" : "";
-  const flag = code ? `<img class="flag" src="https://flagcdn.com/w40/${code}.png" alt="">` : "";
+  const badge = DATA?.meta?.team_badges?.[cleaned];
+  const flag = badge
+    ? `<img class="flag" src="${escapeAttr(badge)}" alt="" onerror="this.remove()">`
+    : code ? `<img class="flag" src="https://flagcdn.com/w40/${code}.png" alt="">` : "";
   const competitionStatus = showCompetitionStatus ? teamCompetitionStatus(team) : "";
   const statusIcon = competitionStatus === "alive"
     ? `<span class="competition-status alive" role="img" aria-label="Sigue en competición">✓</span>`

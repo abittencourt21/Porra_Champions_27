@@ -50,6 +50,17 @@ jobs:
             python -m porra_mundial.build_data --out public/datos.json
           fi
 
+      - name: Sync confirmed and new matches to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            python -m porra_mundial.sync_supabase
+          else
+            echo "Supabase sync skipped: secrets are not configured."
+          fi
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
