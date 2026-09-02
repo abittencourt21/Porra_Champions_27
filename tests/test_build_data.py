@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import call, patch
 
-from porra_mundial.build_data import (
+from porra_champions.build_data import (
     _apply_overrides,
     _enrich_ranking,
     _load_matches,
     _sportsdb_search_event_names,
     _team_key,
 )
-from porra_mundial.models import Match
+from porra_champions.models import Match
 
 
 class BuildDataSportsDbTests(unittest.TestCase):
@@ -45,11 +45,11 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
 
         with patch(
-            "porra_mundial.build_data.fetch_world_cup_events_for_date",
+            "porra_champions.build_data.fetch_champions_events_for_date",
             return_value={"events": []},
         ):
             with patch(
-                "porra_mundial.build_data.fetch_world_cup_events_for_round",
+                "porra_champions.build_data.fetch_champions_events_for_round",
                 side_effect=[knockout_payload] + [{"events": []}] * 5,
             ):
                 matches, live_used, alerts = _load_matches(seed, build_date="2026-06-28")
@@ -180,7 +180,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
 
         with patch(
-            "porra_mundial.build_data.fetch_world_cup_events_for_date",
+            "porra_champions.build_data.fetch_champions_events_for_date",
             side_effect=[{"events": []}, payload],
         ):
             matches, live_used, alerts = _load_matches(seed, build_date="2026-06-15")
@@ -221,7 +221,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
 
         with patch(
-            "porra_mundial.build_data.fetch_world_cup_events_for_date",
+            "porra_champions.build_data.fetch_champions_events_for_date",
             side_effect=[{"events": []}, payload],
         ) as fetch:
             matches, live_used, alerts = _load_matches(seed, build_date="2026-06-11")
@@ -266,7 +266,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
 
         with patch(
-            "porra_mundial.build_data.fetch_world_cup_events_for_date",
+            "porra_champions.build_data.fetch_champions_events_for_date",
             side_effect=[{"events": []}, payload],
         ):
             matches, live_used, alerts = _load_matches(seed, build_date="2026-06-11")
@@ -306,10 +306,10 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
 
         with patch(
-            "porra_mundial.build_data.fetch_world_cup_events_for_date",
+            "porra_champions.build_data.fetch_champions_events_for_date",
             side_effect=[{"events": []}, payload],
         ):
-            with patch("porra_mundial.build_data.search_events", return_value={"events": []}):
+            with patch("porra_champions.build_data.search_events", return_value={"events": []}):
                 matches, live_used, alerts = _load_matches(seed, build_date="2026-06-12")
 
         self.assertTrue(live_used)
@@ -347,8 +347,8 @@ class BuildDataSportsDbTests(unittest.TestCase):
             ]
         }
 
-        with patch("porra_mundial.build_data.fetch_world_cup_events_for_date", return_value={"events": []}):
-            with patch("porra_mundial.build_data.search_events", return_value=fallback_payload) as search:
+        with patch("porra_champions.build_data.fetch_champions_events_for_date", return_value={"events": []}):
+            with patch("porra_champions.build_data.search_events", return_value=fallback_payload) as search:
                 matches, live_used, alerts = _load_matches(seed, build_date="2026-06-11")
 
         search.assert_called_once_with("Mexico_vs_South_Africa", "2026-06-11")
@@ -387,8 +387,8 @@ class BuildDataSportsDbTests(unittest.TestCase):
             ]
         }
 
-        with patch("porra_mundial.build_data.fetch_world_cup_events_for_date", return_value={"events": []}):
-            with patch("porra_mundial.build_data.search_events", return_value=fallback_payload) as search:
+        with patch("porra_champions.build_data.fetch_champions_events_for_date", return_value={"events": []}):
+            with patch("porra_champions.build_data.search_events", return_value=fallback_payload) as search:
                 matches, live_used, alerts = _load_matches(seed, build_date="2026-06-24")
 
         search.assert_called_once_with("Panama_vs_Croatia", "2026-06-23")
@@ -428,9 +428,9 @@ class BuildDataSportsDbTests(unittest.TestCase):
             ]
         }
 
-        with patch("porra_mundial.build_data.fetch_world_cup_events_for_date", return_value={"events": []}):
+        with patch("porra_champions.build_data.fetch_champions_events_for_date", return_value={"events": []}):
             with patch(
-                "porra_mundial.build_data.search_events",
+                "porra_champions.build_data.search_events",
                 side_effect=[{"events": []}, fallback_payload],
             ) as search:
                 matches, live_used, alerts = _load_matches(seed, build_date="2026-06-24")
@@ -477,9 +477,9 @@ class BuildDataSportsDbTests(unittest.TestCase):
             ]
         }
 
-        with patch("porra_mundial.build_data.fetch_world_cup_events_for_date", return_value={"events": []}):
+        with patch("porra_champions.build_data.fetch_champions_events_for_date", return_value={"events": []}):
             with patch(
-                "porra_mundial.build_data.search_events",
+                "porra_champions.build_data.search_events",
                 side_effect=[{"events": []}, fallback_payload],
             ) as search:
                 matches, live_used, alerts = _load_matches(seed, build_date="2026-06-26")
@@ -526,7 +526,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
 
         with patch(
-            "porra_mundial.build_data.fetch_world_cup_events_for_date",
+            "porra_champions.build_data.fetch_champions_events_for_date",
             side_effect=[payload_previous_day, {"events": []}],
         ) as fetch:
             matches, live_used, alerts = _load_matches(seed, build_date="2026-06-14")
@@ -570,7 +570,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
 
         with patch(
-            "porra_mundial.build_data.fetch_world_cup_events_for_date",
+            "porra_champions.build_data.fetch_champions_events_for_date",
             side_effect=[{"events": []}, payload_next_utc_day],
         ) as fetch:
             matches, live_used, alerts = _load_matches(seed, build_date="2026-06-12")
@@ -627,8 +627,8 @@ class BuildDataSportsDbTests(unittest.TestCase):
         }
         payload = {"events": []}
 
-        with patch("porra_mundial.build_data.fetch_world_cup_events_for_date", return_value=payload):
-            with patch("porra_mundial.build_data.search_events", return_value={"events": []}):
+        with patch("porra_champions.build_data.fetch_champions_events_for_date", return_value=payload):
+            with patch("porra_champions.build_data.search_events", return_value={"events": []}):
                 matches, live_used, alerts = _load_matches(seed, previous, build_date="2026-06-15")
 
         self.assertFalse(live_used)
@@ -672,8 +672,8 @@ class BuildDataSportsDbTests(unittest.TestCase):
             ]
         }
 
-        with patch("porra_mundial.build_data.fetch_world_cup_events_for_date") as fetch:
-            with patch("porra_mundial.build_data.search_events") as search:
+        with patch("porra_champions.build_data.fetch_champions_events_for_date") as fetch:
+            with patch("porra_champions.build_data.search_events") as search:
                 matches, live_used, alerts = _load_matches(seed, previous, build_date="2026-06-24")
 
         fetch.assert_not_called()
@@ -699,7 +699,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
             ]
         }
 
-        with patch("porra_mundial.build_data.fetch_world_cup_events_for_date") as fetch:
+        with patch("porra_champions.build_data.fetch_champions_events_for_date") as fetch:
             matches, live_used, alerts = _load_matches(seed, build_date="2026-06-15")
 
         fetch.assert_not_called()

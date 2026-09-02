@@ -8,7 +8,7 @@ Brevo Free incluye correo transaccional y 300 envíos diarios. Verifica SPF, DKI
 
 ## Carga de partidos
 
-Genera el SQL repetible con `python -m porra_mundial.build_supabase_seed`. Después abre `supabase/seed_matches.sql` en el SQL Editor y ejecútalo. La tabla `matches.starts_at` es la fuente de verdad del cierre de cada pronóstico.
+Genera el SQL repetible con `python -m porra_champions.build_supabase_seed`. Después abre `supabase/seed_matches.sql` en el SQL Editor y ejecútalo. La tabla `matches.starts_at` es la fuente de verdad del cierre de cada pronóstico.
 
 1. Crea un proyecto Free y habilita **Email / Magic Link**. Configura la URL de producción y las redirecciones autorizadas de GitHub Pages.
 2. Copia `public/supabase-config.js.example` a `public/supabase-config.js`; completa la URL y la clave publishable. No uses una clave `service_role` ni `sb_secret_` en `public/`.

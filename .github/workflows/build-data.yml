@@ -45,9 +45,9 @@ jobs:
         run: |
           if [ -n "$PREDICTIONS_PROFILES_JSON" ]; then
             printf '%s' "$PREDICTIONS_PROFILES_JSON" > /tmp/predictions_profiles.json
-            python -m porra_mundial.build_data --out public/datos.json --predictions /tmp/predictions_profiles.json
+            python -m porra_champions.build_data --out public/datos.json --predictions /tmp/predictions_profiles.json
           else
-            python -m porra_mundial.build_data --out public/datos.json
+            python -m porra_champions.build_data --out public/datos.json
           fi
 
       - name: Sync confirmed and new matches to Supabase
@@ -56,7 +56,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-            python -m porra_mundial.sync_supabase
+            python -m porra_champions.sync_supabase
           else
             echo "Supabase sync skipped: secrets are not configured."
           fi

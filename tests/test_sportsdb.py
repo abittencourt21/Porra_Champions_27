@@ -1,6 +1,6 @@
 import unittest
 
-from porra_mundial.sportsdb import parse_event, parse_events, summarize_payload
+from porra_champions.sportsdb import parse_event, parse_events, summarize_payload
 
 
 class SportsDbTests(unittest.TestCase):

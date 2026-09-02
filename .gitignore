@@ -15,6 +15,10 @@ public/datos.json
 .env
 public/supabase-config.js
 
+# Herramientas locales de agentes; no forman parte del producto.
+.codex/
+.rsc/
+
 # Credenciales de integraciones
 *.pem
 *.key

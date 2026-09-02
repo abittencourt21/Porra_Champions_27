@@ -1,7 +1,7 @@
 import unittest
 
-from porra_mundial.models import Match
-from porra_mundial.predictions import build_prediction_windows, prediction_points, score_predictions
+from porra_champions.models import Match
+from porra_champions.predictions import build_prediction_windows, prediction_points, score_predictions
 
 
 class PredictionsTests(unittest.TestCase):

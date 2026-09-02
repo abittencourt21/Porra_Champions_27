@@ -1,6 +1,6 @@
 import unittest
 
-from porra_mundial.season_manifest import validate_manifest_for_capture
+from porra_champions.season_manifest import validate_manifest_for_capture
 
 
 class SeasonManifestTests(unittest.TestCase):

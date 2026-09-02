@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from porra_mundial.sheets import (
+from porra_champions.sheets import (
     _read_tsv_url,
     _rows_to_dicts,
     _sanitize_participant,
@@ -62,7 +62,7 @@ class SheetMappingTests(unittest.TestCase):
             def read(self):
                 return "Alias\tEquipo del Bombo 1\nCrack26\tEspana\n".encode()
 
-        with patch("porra_mundial.sheets.urlopen", return_value=FakeResponse()):
+        with patch("porra_champions.sheets.urlopen", return_value=FakeResponse()):
             rows = _read_tsv_url("https://example.test/public.tsv")
 
         self.assertEqual(rows, [["Alias", "Equipo del Bombo 1"], ["Crack26", "Espana"]])
@@ -86,7 +86,7 @@ class SheetMappingTests(unittest.TestCase):
             FakeResponse("type\testado_torneo\nmeta\tgrupos\n"),
         ]
 
-        with patch("porra_mundial.sheets.urlopen", side_effect=responses):
+        with patch("porra_champions.sheets.urlopen", side_effect=responses):
             inputs = load_public_tsv_inputs(
                 tsv_url="https://example.test/public.tsv",
                 overrides_tsv_url="https://example.test/overrides.tsv",

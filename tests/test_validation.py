@@ -1,6 +1,6 @@
 import unittest
 
-from porra_mundial.validation import find_combination_conflicts
+from porra_champions.validation import find_combination_conflicts
 
 
 class ValidationTests(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from porra_mundial.champions import (
+from porra_champions.champions import (
     CHAMPIONS_LEAGUE_ID,
     CHAMPIONS_SEASON,
     UEFA_FIXTURES_URL,

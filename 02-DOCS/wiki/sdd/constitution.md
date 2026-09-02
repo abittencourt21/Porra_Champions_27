@@ -18,7 +18,7 @@ Last amended: 2026-07-20
 
 - Relevant unit tests were red before the behavioural implementation and are green after it.
 - `$env:PYTHONPATH = 'src'; python -m unittest discover -s tests` exits 0.
-- `$env:PYTHONPATH = 'src'; python -m porra_mundial.build_data --out public/datos.json` exits 0.
+- `$env:PYTHONPATH = 'src'; python -m porra_champions.build_data --out public/datos.json` exits 0.
 - Generated output satisfies the approved acceptance criteria and includes traceable source metadata.
 - The diff has passed an evidence-backed review and contains no secrets or personal data.
 

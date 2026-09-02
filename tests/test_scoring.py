@@ -1,6 +1,6 @@
 import unittest
 
-from porra_mundial.scoring import build_datos_json, result_points, score_participant
+from porra_champions.scoring import build_datos_json, result_points, score_participant
 
 
 class ScoringTests(unittest.TestCase):

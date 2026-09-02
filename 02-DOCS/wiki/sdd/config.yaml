@@ -20,10 +20,10 @@ testing:
   commands:
     apply:
       - "$env:PYTHONPATH = 'src'; python -m unittest discover -s tests"
-      - "$env:PYTHONPATH = 'src'; python -m porra_mundial.build_data --out public/datos.json"
+      - "$env:PYTHONPATH = 'src'; python -m porra_champions.build_data --out public/datos.json"
     verify:
       - "$env:PYTHONPATH = 'src'; python -m unittest discover -s tests"
-      - "$env:PYTHONPATH = 'src'; python -m porra_mundial.build_data --out public/datos.json"
+      - "$env:PYTHONPATH = 'src'; python -m porra_champions.build_data --out public/datos.json"
 phase_rules:
   proposal: optional-on-ambiguity
   specify: requires intent or proposal

@@ -2,7 +2,7 @@ import csv
 import unittest
 from pathlib import Path
 
-from porra_mundial.overrides_template import build_overrides_template_rows
+from porra_champions.overrides_template import build_overrides_template_rows
 
 
 ROOT = Path(__file__).resolve().parents[1]
