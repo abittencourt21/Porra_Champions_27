@@ -51,6 +51,20 @@ $env:PYTHONPATH = "src"
 Consulta [`supabase/README.md`](supabase/README.md) para migraciones, RLS y la
 sincronización administrativa.
 
+## Publicar en GitHub Pages
+
+En el repositorio, activa **Settings > Pages > Source: GitHub Actions** y añade
+estos secretos en **Settings > Secrets and variables > Actions**:
+
+- `SUPABASE_URL`: Project URL de Supabase.
+- `SUPABASE_PUBLISHABLE_KEY`: clave publishable (anon) del proyecto.
+- `SUPABASE_SERVICE_ROLE_KEY`: clave `service_role`, solo para la sincronización
+  administrativa de partidos. Nunca se envía al navegador.
+
+El flujo `Build and deploy Pages` crea en cada despliegue el archivo público de
+configuración con los dos primeros secretos. Tras guardarlos, ejecútalo desde
+**Actions > Build and deploy Pages > Run workflow**.
+
 ## Estructura
 
 - `data/champions-2026-27/`: datos de temporada importados y trazables.

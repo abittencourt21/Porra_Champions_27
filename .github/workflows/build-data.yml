@@ -50,6 +50,17 @@ jobs:
             python -m porra_champions.build_data --out public/datos.json
           fi
 
+      - name: Configure public Supabase client
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY GitHub secret."
+            exit 1
+          fi
+          node -e 'const fs=require("fs"); fs.writeFileSync("public/supabase-config.js", `window.PORRA_SUPABASE = ${JSON.stringify({url:process.env.SUPABASE_URL,publishableKey:process.env.SUPABASE_PUBLISHABLE_KEY}, null, 2)};\n`);'
+
       - name: Sync confirmed and new matches to Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
