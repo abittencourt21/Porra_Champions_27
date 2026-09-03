@@ -156,6 +156,8 @@ let localProfiles = [];
 let openAliases = new Set();
 let rankingSearch = "";
 let rankingSort = "rank";
+let rankingMode = "general";
+let quinielistaRows = [];
 let historyAliases = new Set();
 let historyAllSelected = true;
 let historyHoverAlias = "";
@@ -200,8 +202,12 @@ async function boot() {
   .then(async (data) => {
     DATA = normalizePayload(data);
     if (supabaseClient) {
-      const { data: participants } = await supabaseClient.from("public_participants").select("alias, equipos, campeon, subcampeon, pichichi");
+      const [{ data: participants }, { data: quinielista }] = await Promise.all([
+        supabaseClient.from("public_participants").select("alias, equipos, campeon, subcampeon, pichichi"),
+        supabaseClient.from("quinielista_ranking").select("posicion, alias, puntos_quinielista, resultados_exactos, jornadas_ganadas"),
+      ]);
       DATA.participantes = (participants || []).map((row) => ({ ...row, puntos_total: 0, desglose: {} }));
+      quinielistaRows = quinielista || [];
     }
     openAliases = new Set();
     render();
@@ -543,6 +549,7 @@ function getDemoJornadaMatches() {
 }
 
 function renderRanking() {
+  if (rankingMode === "quinielista") return renderQuinielistaRanking();
   if (!DATA.participantes.length) return `<div class="empty">Todavía no hay participantes publicados.</div>`;
   const participants = rankingParticipants();
   return `
@@ -552,10 +559,20 @@ function renderRanking() {
         <p class="section-note">Ordena, busca y compara participantes. La clasificación general usa criterios UEFA de desempate: puntos, diferencia de goles, goles a favor y, si sigue el empate, mejor resultado en enfrentamientos directos.</p>
       </div>
     </div>
+    ${rankingModeTabs()}
     ${rankingToolbar(participants)}
     ${participants.length ? `<div class="stack">${participants.map((participant, index) => renderParticipant(participant, index)).join("")}</div>` : `<div class="empty">No hay participantes con ese filtro.</div>`}
     ${renderRankingHistory(participants)}
   `;
+}
+
+function rankingModeTabs() {
+  return `<div class="ranking-mode-tabs" role="tablist" aria-label="Clasificaciones"><button class="${rankingMode === "general" ? "active" : ""}" data-ranking-mode="general" role="tab">General</button><button class="${rankingMode === "quinielista" ? "active" : ""}" data-ranking-mode="quinielista" role="tab">Quinielista</button></div>`;
+}
+
+function renderQuinielistaRanking() {
+  const rows = quinielistaRows.filter((row) => !rankingSearch || normalizeSearch(row.alias).includes(normalizeSearch(rankingSearch)));
+  return `<div class="ranking-title"><div><h2>Premio Quinielista</h2><p class="section-note">Solo cuenta los puntos de pronósticos. Desempates: resultados exactos y jornadas ganadas. El premio equivale al 20% del bote y es acumulable.</p></div></div>${rankingModeTabs()}${rows.length ? `<div class="stack">${rows.map((row, index) => `<article class="ranking-card ${ownProfile?.alias === row.alias ? "current-user" : ""}"><div class="ranking-head"><div class="rank">${row.posicion || index + 1}</div><div><div class="alias">${escapeHtml(row.alias)}</div><div class="ranking-summary"><span class="summary-chip"><b>Exactos</b>${row.resultados_exactos || 0}</span><span class="summary-chip"><b>Jornadas</b>${row.jornadas_ganadas || 0}</span></div></div><div class="score">${row.puntos_quinielista || 0}<span>quiniela</span></div></div></article>`).join("")}</div>` : `<div class="empty">Aún no hay puntos de quiniela finalizados.</div>`}`;
 }
 
 function renderParticipant(participant, index) {
@@ -1445,6 +1462,9 @@ function bindEvents() {
       restoreRankingSearchFocus = true;
       render();
     });
+  });
+  document.querySelectorAll("[data-ranking-mode]").forEach((button) => {
+    button.addEventListener("click", () => { rankingMode = button.dataset.rankingMode; rankingSearch = ""; render(); });
   });
   document.querySelectorAll("[data-ranking-sort]").forEach((select) => {
     select.addEventListener("change", () => {
