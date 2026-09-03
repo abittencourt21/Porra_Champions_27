@@ -12,6 +12,8 @@ confirmadas oficialmente.
 - Fuente primaria: resultados y calendario publicados por UEFA.
 - Bombos: anuncio oficial de UEFA para la fase liga 2026/27.
 - Contraste secundario: TheSportsDB, liga 4480.
+- Escudos locales: selección de SVG de `JoseArroyave/football-logos` (MIT),
+  limitada a los clubes participantes.
 
 Las URLs exactas y el momento de captura quedan en `meta` y en cada
 `partido.source_url`. El tier gratuito de TheSportsDB no ofrece cobertura

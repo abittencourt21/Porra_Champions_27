@@ -1677,7 +1677,7 @@ function teamLabel(team, showCompetitionStatus = false) {
   const display = displayTeamName(cleaned);
   const code = FLAGS[cleaned] || FLAGS[display] || FLAGS[String(team || "")];
   const suffix = String(team || "").includes("**") ? "**" : String(team || "").includes("*") ? "*" : "";
-  const badge = DATA?.meta?.team_badges?.[cleaned];
+  const badge = DATA?.meta?.team_badges?.[cleaned] || `assets/clubs/${clubBadgeSlug(cleaned)}.svg`;
   const flag = badge
     ? `<img class="flag" src="${escapeAttr(badge)}" alt="" onerror="this.remove()">`
     : code ? `<img class="flag" src="https://flagcdn.com/w40/${code}.png" alt="">` : "";
@@ -1688,6 +1688,10 @@ function teamLabel(team, showCompetitionStatus = false) {
       ? `<span class="competition-status eliminated" role="img" aria-label="Eliminada">×</span>`
       : "";
   return `<span class="team-label">${flag}<span>${escapeHtml(display)}${suffix}</span>${statusIcon}</span>`;
+}
+
+function clubBadgeSlug(team) {
+  return String(team || "").replace(/[^a-zA-Z0-9]/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
 }
 
 function teamCompetitionStatus(team) {
