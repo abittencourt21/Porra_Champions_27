@@ -434,7 +434,7 @@ function renderSecureEntryForm() {
   const optionList = (teams) => [...teams].sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" })).map((team) => `<option value="${escapeAttr(team)}">${escapeHtml(team)}</option>`).join("");
   const allTeams = BOMBOS.flat();
   const playerOptions = playerCatalog.map((player) => `<option value="${escapeAttr(`${player.full_name} — ${player.team_name}`)}"></option>`).join("");
-  const catalogReady = true;
+  const catalogReady = playerCatalog.length > 0;
   return `<div class="user-shell"><section class="user-card"><p class="eyebrow">Inscripción inicial</p><h2>Define tu porra</h2><p>Esta inscripción se bloquea al comenzar la primera jornada.</p><form class="registration-form" data-secure-entry-form>
     ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><input name="pot_${pot}_team" list="pot-${pot}-teams" required placeholder="Busca un equipo"><datalist id="pot-${pot}-teams">${optionList(BOMBOS[pot - 1])}</datalist></label>`).join("")}
     <label><span>Campeón</span><input name="champion_team" list="all-teams" required placeholder="Busca un equipo"></label>
@@ -1373,8 +1373,8 @@ function bindEvents() {
     const feedback = form.querySelector("[data-entry-feedback]");
     if (entry.champion_team === entry.runner_up_team) { feedback.hidden = false; feedback.textContent = "Campeón y subcampeón deben ser distintos."; return; }
     if (Object.values(counts).some((count) => count > 2)) { feedback.hidden = false; feedback.textContent = "Un mismo equipo solo puede elegirse dos veces."; return; }
-    const playerId = player?.player_id || `manual:${form.top_scorer.value.trim()}`;
-    const { error } = await supabaseClient.rpc("save_entry", { target_pot_1: entry.pot_1_team, target_pot_2: entry.pot_2_team, target_pot_3: entry.pot_3_team, target_pot_4: entry.pot_4_team, target_champion: entry.champion_team, target_runner_up: entry.runner_up_team, target_player_id: playerId });
+    if (!player) { feedback.hidden = false; feedback.textContent = "Elige un Pichichi de la lista de jugadores."; return; }
+    const { error } = await supabaseClient.rpc("save_entry", { target_pot_1: entry.pot_1_team, target_pot_2: entry.pot_2_team, target_pot_3: entry.pot_3_team, target_pot_4: entry.pot_4_team, target_champion: entry.champion_team, target_runner_up: entry.runner_up_team, target_player_id: player.player_id });
     if (error) { feedback.hidden = false; feedback.textContent = "No se pudo confirmar la inscripción. Revisa tus elecciones e inténtalo de nuevo."; return; }
     await loadPrivateData(); render();
   });
