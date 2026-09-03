@@ -173,6 +173,7 @@ let authMode = "login";
 let authNotice = "";
 let authBusyAction = "";
 let authRecoveryMode = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("type") === "recovery";
+let playerCatalog = [];
 
 applyTheme(initialTheme());
 
@@ -219,14 +220,16 @@ async function boot() {
 }
 
 async function loadPrivateData() {
-  const [{ data: profile }, { data: entry }, { data: predictions }] = await Promise.all([
+  const [{ data: profile }, { data: entry }, { data: predictions }, { data: players }] = await Promise.all([
     supabaseClient.from("profiles").select("user_id, alias").maybeSingle(),
     supabaseClient.from("entries").select("*").maybeSingle(),
     supabaseClient.from("predictions").select("match_id, home_score, away_score, confirmed_at"),
+    supabaseClient.from("players").select("player_id, full_name, team_name, normalized_name").eq("season", "2026-2027").eq("active", true).order("full_name"),
   ]);
   ownProfile = profile;
   ownEntry = entry;
   ownPredictions = Object.fromEntries((predictions || []).map((row) => [String(row.match_id), row]));
+  playerCatalog = players || [];
 }
 
 function normalizePayload(data) {
@@ -422,14 +425,16 @@ function renderAuthExperience() {
 }
 
 function renderSecureEntryForm() {
-  const optionList = (teams) => teams.map((team) => `<option value="${escapeAttr(team)}">${escapeHtml(team)}</option>`).join("");
+  const optionList = (teams) => [...teams].sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" })).map((team) => `<option value="${escapeAttr(team)}">${escapeHtml(team)}</option>`).join("");
   const allTeams = BOMBOS.flat();
+  const playerOptions = playerCatalog.map((player) => `<option value="${escapeAttr(`${player.full_name} — ${player.team_name}`)}"></option>`).join("");
+  const catalogReady = playerCatalog.length > 0;
   return `<div class="user-shell"><section class="user-card"><p class="eyebrow">Inscripción inicial</p><h2>Define tu porra</h2><p>Esta inscripción se bloquea al comenzar la primera jornada.</p><form class="registration-form" data-secure-entry-form>
-    ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><select name="pot_${pot}_team" required><option value="">Elige un equipo</option>${optionList(BOMBOS[pot - 1])}</select></label>`).join("")}
-    <label><span>Campeón</span><select name="champion_team" required><option value="">Elige un equipo</option>${optionList(allTeams)}</select></label>
-    <label><span>Subcampeón</span><select name="runner_up_team" required><option value="">Elige un equipo</option>${optionList(allTeams)}</select></label>
-    <label><span>Pichichi</span><input name="top_scorer" required maxlength="80" placeholder="Nombre del jugador"></label>
-    <button class="primary" type="submit">Confirmar inscripción</button></form></section></div>`;
+    ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><input name="pot_${pot}_team" list="pot-${pot}-teams" required placeholder="Busca un equipo"><datalist id="pot-${pot}-teams">${optionList(BOMBOS[pot - 1])}</datalist></label>`).join("")}
+    <label><span>Campeón</span><input name="champion_team" list="all-teams" required placeholder="Busca un equipo"></label>
+    <label><span>Subcampeón</span><input name="runner_up_team" list="all-teams" required placeholder="Busca un equipo"></label><datalist id="all-teams">${optionList(allTeams)}</datalist>
+    <label><span>Pichichi</span><input name="top_scorer" list="players" required ${catalogReady ? "" : "disabled"} placeholder="${catalogReady ? "Busca jugador o equipo" : "Pendiente de catálogo UEFA"}"></label><datalist id="players">${playerOptions}</datalist>
+    <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo UEFA se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>Confirmar inscripción</button></form></section></div>`;
 }
 
 function renderUserRegistration() {
@@ -1345,10 +1350,15 @@ function bindEvents() {
   document.querySelector("[data-secure-entry-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    const entry = Object.fromEntries(["pot_1_team", "pot_2_team", "pot_3_team", "pot_4_team", "champion_team", "runner_up_team", "top_scorer"].map((key) => [key, form[key].value.trim()]));
-    if (entry.champion_team === entry.runner_up_team) return alert("Campeón y subcampeón deben ser distintos.");
-    const { error } = await supabaseClient.from("entries").insert({ user_id: currentUser.id, ...entry });
-    if (error) return alert(`No se pudo confirmar la inscripción: ${error.message}`);
+    const entry = Object.fromEntries(["pot_1_team", "pot_2_team", "pot_3_team", "pot_4_team", "champion_team", "runner_up_team"].map((key) => [key, form[key].value.trim()]));
+    const counts = Object.values(entry).reduce((map, team) => ({ ...map, [team]: (map[team] || 0) + 1 }), {});
+    const player = playerCatalog.find((item) => `${item.full_name} — ${item.team_name}` === form.top_scorer.value.trim());
+    const feedback = form.querySelector("[data-entry-feedback]");
+    if (entry.champion_team === entry.runner_up_team) { feedback.hidden = false; feedback.textContent = "Campeón y subcampeón deben ser distintos."; return; }
+    if (Object.values(counts).some((count) => count > 2)) { feedback.hidden = false; feedback.textContent = "Un mismo equipo solo puede elegirse dos veces."; return; }
+    if (!player) { feedback.hidden = false; feedback.textContent = "Elige un Pichichi de la lista UEFA."; return; }
+    const { error } = await supabaseClient.rpc("save_entry", { target_pot_1: entry.pot_1_team, target_pot_2: entry.pot_2_team, target_pot_3: entry.pot_3_team, target_pot_4: entry.pot_4_team, target_champion: entry.champion_team, target_runner_up: entry.runner_up_team, target_player_id: player.player_id });
+    if (error) { feedback.hidden = false; feedback.textContent = "No se pudo confirmar la inscripción. Revisa tus elecciones e inténtalo de nuevo."; return; }
     await loadPrivateData(); render();
   });
   document.querySelector("[data-secure-sign-out]")?.addEventListener("click", async () => {
