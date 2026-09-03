@@ -51,6 +51,19 @@ $env:PYTHONPATH = "src"
 Consulta [`supabase/README.md`](supabase/README.md) para migraciones, RLS y la
 sincronización administrativa.
 
+## Acceso de participantes
+
+La web usa Supabase Auth con Google, Microsoft y email/contraseña. Brevo se
+utiliza solo para confirmar nuevas cuentas y recuperar una contraseña. En
+**Supabase > Authentication > Providers**, habilita Email (contraseña), Google
+y Azure. En **URL Configuration**, añade como Site URL y Redirect URL:
+`https://abittencourt21.github.io/Porra_Champions_27/`.
+
+En Google Cloud y Microsoft Entra registra exactamente el callback que muestra
+Supabase y guarda los Client Secret solo allí. Antes de abrir la porra, prueba
+una cuenta que hubiera entrado por Magic Link: debe conservar alias,
+inscripción y pronósticos; no enlaces manualmente dos cuentas distintas.
+
 ## Publicar en GitHub Pages
 
 En el repositorio, activa **Settings > Pages > Source: GitHub Actions** y añade

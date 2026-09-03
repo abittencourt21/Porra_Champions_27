@@ -169,6 +169,10 @@ let matchStatusFilter = "all";
 let koRound = "R32";
 let predictionRound = "J01";
 let predictionDrafts = {};
+let authMode = "login";
+let authNotice = "";
+let authBusyAction = "";
+let authRecoveryMode = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("type") === "recovery";
 
 applyTheme(initialTheme());
 
@@ -382,10 +386,7 @@ function renderUserExperience() {
 }
 
 function renderSecureUserExperience() {
-  if (!currentUser) return `
-    <div class="user-shell"><section class="user-card"><p class="eyebrow">Acceso seguro</p><h2>Entra con tu email</h2>
-    <p>Te enviaremos un enlace de acceso. No guardamos contraseñas y tus datos quedan aislados.</p><p class="auth-note">Si no lo ves en unos minutos, revisa la carpeta de Spam o Correo no deseado.</p>
-    <form class="registration-form" data-magic-link-form><label><span>Email</span><input name="email" type="email" required placeholder="usuario@example.com"></label><button class="primary" type="submit">Enviar enlace de acceso</button></form></section></div>`;
+  if (!currentUser || authRecoveryMode) return renderAuthExperience();
   if (!ownProfile) return `
     <div class="user-shell"><section class="user-card"><p class="eyebrow">Perfil</p><h2>Elige tu alias</h2>
     <form class="registration-form" data-secure-profile-form><label><span>Alias</span><input name="alias" required minlength="2" maxlength="32" placeholder="Tu nombre visible"></label><button class="primary" type="submit">Guardar perfil</button></form></section></div>`;
@@ -406,6 +407,18 @@ function renderSecureUserExperience() {
       <p class="prediction-legend" aria-label="Puntuación de esta fase"><span>Exacto <strong>${exactPoints} pts</strong></span><span>1X2 <strong>${outcomePoints} pt${outcomePoints === 1 ? "" : "s"}</strong></span></p>
       <p class="prediction-round-summary"><strong>${roundPoints} pts</strong>${completed.length ? ` · ${exacts} exacto${exacts === 1 ? "" : "s"} · ${outcomes} 1X2` : " · Aún no hay partidos finalizados"}</p>
       <form class="prediction-form" data-secure-prediction-form>${matches.map((match) => renderPredictionRow(match, ownPredictions[String(match.matchid)])).join("")}<button class="primary" type="submit">Guardar pronósticos rellenados</button></form></section></div>`;
+}
+
+function renderAuthExperience() {
+  const reset = authRecoveryMode;
+  const signup = authMode === "signup";
+  const notice = authNotice ? `<p class="auth-feedback" role="status" aria-live="polite">${escapeHtml(authNotice)}</p>` : "";
+  if (reset) return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Nueva contraseña</p><h2>Recupera tu acceso</h2><p>Define una contraseña nueva para tu cuenta.</p>${notice}<form class="registration-form" data-password-update-form><label><span>Nueva contraseña</span><input name="password" type="password" required minlength="8" autocomplete="new-password"></label><label><span>Repite la contraseña</span><input name="confirm_password" type="password" required minlength="8" autocomplete="new-password"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Actualizando…" : "Guardar contraseña"}</button></form></section></div>`;
+  if (authMode === "reset-request") return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Recuperar contraseña</p><h2>Recupera tu acceso</h2><p>Te enviaremos instrucciones si existe una cuenta con ese email.</p>${notice}<form class="registration-form" data-password-reset-form><label><span>Email</span><input name="email" type="email" required autocomplete="email" placeholder="usuario@example.com"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Enviando…" : "Enviar instrucciones"}</button></form><div class="auth-actions"><button type="button" class="text-button" data-auth-login>Volver a entrar</button></div></section></div>`;
+  return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Acceso seguro</p><h2>${signup ? "Crea tu cuenta" : "Entra en tu porra"}</h2><p>Accede con tu cuenta habitual. Tus datos y pronósticos siguen siendo privados.</p>${notice}
+    <div class="auth-providers"><button class="secondary" type="button" data-auth-oauth="google" ${authBusyAction ? "disabled" : ""}>Continuar con Google</button><button class="secondary" type="button" data-auth-oauth="azure" ${authBusyAction ? "disabled" : ""}>Continuar con Microsoft</button></div><p class="auth-divider"><span>o</span></p>
+    <form class="registration-form" data-password-auth-form><label><span>Email</span><input name="email" type="email" required autocomplete="email" placeholder="usuario@example.com"></label><label><span>Contraseña</span><input name="password" type="password" required minlength="8" autocomplete="${signup ? "new-password" : "current-password"}"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Espera…" : signup ? "Crear cuenta" : "Entrar"}</button></form>
+    <div class="auth-actions"><button type="button" class="text-button" data-auth-toggle>${signup ? "Ya tengo cuenta" : "Crear cuenta"}</button><button type="button" class="text-button" data-auth-reset>¿Has olvidado tu contraseña?</button></div></section></div>`;
 }
 
 function renderSecureEntryForm() {
@@ -1262,11 +1275,65 @@ function bindEvents() {
       render();
     });
   });
-  document.querySelector("[data-magic-link-form]")?.addEventListener("submit", async (event) => {
+  document.querySelectorAll("[data-auth-oauth]").forEach((button) => button.addEventListener("click", async () => {
+    authBusyAction = button.dataset.authOauth;
+    authNotice = "";
+    render();
+    const options = { redirectTo: PorraAuth.canonicalAuthRedirect() };
+    if (button.dataset.authOauth === "azure") options.scopes = "email";
+    const { error } = await supabaseClient.auth.signInWithOAuth({ provider: button.dataset.authOauth, options });
+    if (error) { authBusyAction = ""; authNotice = "No se pudo iniciar el acceso con ese proveedor. Inténtalo de nuevo."; render(); }
+  }));
+  document.querySelector("[data-auth-toggle]")?.addEventListener("click", () => {
+    authMode = authMode === "signup" ? "login" : "signup";
+    authNotice = "";
+    render();
+  });
+  document.querySelector("[data-auth-login]")?.addEventListener("click", () => { authMode = "login"; authNotice = ""; render(); });
+  document.querySelector("[data-password-auth-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const email = event.currentTarget.email.value.trim();
-    const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
-    alert(error ? `No se pudo enviar el enlace: ${error.message}` : "Revisa tu correo para acceder.");
+    const form = event.currentTarget;
+    const email = form.email.value.trim();
+    const password = form.password.value;
+    if (!PorraAuth.validatePassword(password).valid) { authNotice = "La contraseña debe tener al menos 8 caracteres."; render(); return; }
+    authBusyAction = "password";
+    render();
+    const response = authMode === "signup"
+      ? await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: PorraAuth.canonicalAuthRedirect() } })
+      : await supabaseClient.auth.signInWithPassword({ email, password });
+    authBusyAction = "";
+    authNotice = response.error
+      ? PorraAuth.authMessage("password-login-error")
+      : authMode === "signup" ? PorraAuth.authMessage("password-signup-sent") : "";
+    if (!response.error && authMode === "login") currentUser = response.data.user;
+    render();
+  });
+  document.querySelector("[data-auth-reset]")?.addEventListener("click", () => {
+    authMode = "reset-request";
+    authNotice = "Introduce tu email y crea una contraseña nueva desde el correo que recibirás.";
+    render();
+  });
+  document.querySelector("[data-password-reset-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    authBusyAction = "reset";
+    render();
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(event.currentTarget.email.value.trim(), { redirectTo: PorraAuth.canonicalAuthRedirect() });
+    authBusyAction = "";
+    authNotice = error ? "No se pudo solicitar la recuperación. Inténtalo de nuevo." : PorraAuth.authMessage("password-reset-sent");
+    render();
+  });
+  document.querySelector("[data-password-update-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (form.password.value !== form.confirm_password.value) { authNotice = "Las contraseñas no coinciden."; render(); return; }
+    if (!PorraAuth.validatePassword(form.password.value).valid) { authNotice = "La contraseña debe tener al menos 8 caracteres."; render(); return; }
+    authBusyAction = "update";
+    render();
+    const { error } = await supabaseClient.auth.updateUser({ password: form.password.value });
+    authBusyAction = "";
+    authNotice = error ? "No se pudo actualizar la contraseña. Solicita un enlace nuevo e inténtalo de nuevo." : PorraAuth.authMessage("password-updated");
+    if (!error) authRecoveryMode = false;
+    render();
   });
   document.querySelector("[data-secure-profile-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault();

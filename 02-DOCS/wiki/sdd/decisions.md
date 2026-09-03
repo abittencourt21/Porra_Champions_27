@@ -1,5 +1,11 @@
 # SDD decisions
 
+## 2026-09-03 — Acceso sin Magic Link (feature: auth-password-social-login)
+
+- Supabase Auth mantiene la identidad y RLS existentes; se sustituyen solo los métodos de acceso del navegador.
+- Google y Azure/Microsoft son las vías principales; email/contraseña cubre alta, acceso y recuperación. Brevo queda limitado a los correos imprescindibles.
+- No se fusionan automáticamente cuentas OAuth y preexistentes: cualquier `auth.users.id` distinto se trata administrativamente para proteger perfiles y pronósticos.
+
 ## 2026-07-20 — Alcance de la semilla histórica Champions
 
 - Se usará la UEFA Champions League 2025-26 como semilla histórica de referencia.
