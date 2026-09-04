@@ -2,12 +2,19 @@
 type: spec
 title: Spec - Autenticación por contraseña, Google y Microsoft
 slug: auth-password-social-login
-status: clarified
+status: approved-autopilot
 priority: 1
 updated: 2026-09-03
 ---
 
 # Autenticación por contraseña, Google y Microsoft
+
+## Mejora UX 2026-09-04
+
+- Inicio de sesión y alta por email serán pantallas visualmente distintas.
+- Tras un alta correcta se mostrará un estado de éxito dedicado: acceso directo
+  si Supabase devuelve sesión, o instrucciones de confirmación y vuelta al
+  inicio de sesión si la confirmación por correo está activa.
 
 ## Objetivo
 

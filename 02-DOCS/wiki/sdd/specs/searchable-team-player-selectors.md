@@ -2,12 +2,21 @@
 type: spec
 title: Spec - Selectores buscables de equipos y Pichichi
 slug: searchable-team-player-selectors
-status: queued
+status: approved-autopilot
 priority: 2
 source: spec-selectores-equipos-pichichi-v2.md
 ---
 
 # Selectores buscables de equipos y Pichichi
+
+## Mejora UX 2026-09-04
+
+- La inscripción explicará junto al formulario la regla de diversidad: no se
+  admiten combinaciones que coincidan en tres o más de los cuatro equipos de
+  bombos con una inscripción anterior; se conserva la primera confirmada.
+- Una inscripción ya guardada se podrá abrir y modificar hasta el inicio del
+  primer partido de fase liga. Al cerrarse, el control desaparece y la API
+  mantiene el mismo límite de seguridad.
 
 Sustituir los selectores nativos de inscripción por combobox accesibles,
 ordenados alfabéticamente y buscables sin acentos, puntuación o mayúsculas.

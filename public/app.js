@@ -174,6 +174,8 @@ let predictionDrafts = {};
 let authMode = "login";
 let authNotice = "";
 let authBusyAction = "";
+let authSignupComplete = null;
+let entryEditing = false;
 let authRecoveryMode = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("type") === "recovery";
 let playerCatalog = [];
 
@@ -399,7 +401,7 @@ function renderSecureUserExperience() {
   if (!ownProfile) return `
     <div class="user-shell"><section class="user-card"><p class="eyebrow">Perfil</p><h2>Elige tu alias</h2>
     <form class="registration-form" data-secure-profile-form><label><span>Alias</span><input name="alias" required minlength="2" maxlength="32" placeholder="Tu nombre visible"></label><button class="primary" type="submit">Guardar perfil</button></form></section></div>`;
-  if (!ownEntry) return renderSecureEntryForm();
+  if (!ownEntry || entryEditing) return renderSecureEntryForm(ownEntry);
   const matches = DATA.partidos.filter((match) => match.ronda === predictionRound);
   const [exactPoints, outcomePoints] = predictionScoreScale(matches[0]?.ronda);
   const completed = matches.filter((match) => ["FT", "AET", "AOT", "AP", "PEN"].includes(String(match.status || "").toUpperCase()));
@@ -410,7 +412,10 @@ function renderSecureUserExperience() {
   const totalPoints = allPredictionMatches.reduce((total, match) => total + predictionScorePoints(ownPredictions[String(match.matchid)], match), 0);
   const pending = allPredictionMatches.filter((match) => isPredictionOpen(match) && !ownPredictions[String(match.matchid)]).length;
   const lastSaved = Object.values(ownPredictions).map((prediction) => prediction.confirmed_at).filter(Boolean).sort().at(-1);
-  return `<div class="user-shell"><section class="user-card"><div><p class="eyebrow">Usuario activo</p><h2>${escapeHtml(ownProfile.alias)}</h2><p>${escapeHtml(currentUser.email)}</p></div><button class="secondary" data-secure-sign-out>Salir</button></section>
+  const entryAction = isEntryOpen()
+    ? `<button class="secondary" data-edit-entry>Modificar selección</button>`
+    : `<p class="entry-locked">Inscripción cerrada desde el inicio del torneo.</p>`;
+  return `<div class="user-shell"><section class="user-card"><div><p class="eyebrow">Usuario activo</p><h2>${escapeHtml(ownProfile.alias)}</h2><p>${escapeHtml(currentUser.email)}</p></div><div class="user-actions">${entryAction}<button class="secondary" data-secure-sign-out>Salir</button></div></section>
     <section class="user-dashboard" aria-label="Resumen de mi porra"><div><span>Puntos totales</span><strong>${totalPoints}</strong></div><div><span>Fase activa</span><strong>${escapeHtml(predictionRoundLabel(predictionRound))}</strong></div><div><span>Pendientes abiertos</span><strong>${pending}</strong></div>${lastSaved ? `<small>Último guardado: ${escapeHtml(formatLocalDateTime(lastSaved))}</small>` : ""}</section>
     <section class="user-card user-card-alt"><p class="eyebrow">Pronósticos</p><h3>Jornada 1</h3><p>Puedes guardar partidos individuales o todos los que hayas rellenado. El cierre se valida en la base de datos una hora antes.</p>
       <p class="prediction-legend" aria-label="Puntuación de esta fase"><span>Exacto <strong>${exactPoints} pts</strong></span><span>1X2 <strong>${outcomePoints} pt${outcomePoints === 1 ? "" : "s"}</strong></span></p>
@@ -422,25 +427,31 @@ function renderAuthExperience() {
   const reset = authRecoveryMode;
   const signup = authMode === "signup";
   const notice = authNotice ? `<p class="auth-feedback" role="status" aria-live="polite">${escapeHtml(authNotice)}</p>` : "";
+  if (authSignupComplete) {
+    const confirmed = Boolean(authSignupComplete.session);
+    return `<div class="user-shell"><section class="user-card auth-card auth-success-card"><p class="eyebrow">${confirmed ? "Cuenta preparada" : "Revisa tu correo"}</p><h2>${confirmed ? "Ya puedes empezar" : "Confirma tu cuenta"}</h2><p>${confirmed ? "Tu cuenta se ha creado y la sesión está abierta." : `Hemos creado la cuenta de ${escapeHtml(authSignupComplete.email)}. Si la confirmación de correo está activa, abre el enlace recibido para continuar.`}</p><div class="auth-success-mark" aria-hidden="true">✓</div><button class="primary" type="button" data-auth-continue>${confirmed ? "Continuar a mi porra" : "Volver a iniciar sesión"}</button></section></div>`;
+  }
   if (reset) return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Nueva contraseña</p><h2>Recupera tu acceso</h2><p>Define una contraseña nueva para tu cuenta.</p>${notice}<form class="registration-form" data-password-update-form><label><span>Nueva contraseña</span><input name="password" type="password" required minlength="8" autocomplete="new-password"></label><label><span>Repite la contraseña</span><input name="confirm_password" type="password" required minlength="8" autocomplete="new-password"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Actualizando…" : "Guardar contraseña"}</button></form></section></div>`;
   if (authMode === "reset-request") return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Recuperar contraseña</p><h2>Recupera tu acceso</h2><p>Te enviaremos instrucciones si existe una cuenta con ese email.</p>${notice}<form class="registration-form" data-password-reset-form><label><span>Email</span><input name="email" type="email" required autocomplete="email" placeholder="usuario@example.com"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Enviando…" : "Enviar instrucciones"}</button></form><div class="auth-actions"><button type="button" class="text-button" data-auth-login>Volver a entrar</button></div></section></div>`;
-  return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Acceso seguro</p><h2>${signup ? "Crea tu cuenta" : "Entra en tu porra"}</h2><p>Accede con tu cuenta habitual. Tus datos y pronósticos siguen siendo privados.</p>${notice}
+  return `<div class="user-shell"><section class="user-card auth-card ${signup ? "auth-signup-card" : ""}"><p class="eyebrow">${signup ? "Nueva cuenta" : "Acceso seguro"}</p><h2>${signup ? "Crea tu cuenta" : "Entra en tu porra"}</h2><p>${signup ? "Crea una cuenta para guardar tu inscripción y continuar desde cualquier dispositivo." : "Accede con tu cuenta habitual. Tus datos y pronósticos siguen siendo privados."}</p>${signup ? "<ul class=\"auth-benefits\"><li>Un perfil privado y protegido</li><li>Pronósticos guardados por partido</li><li>Inscripción editable hasta el inicio</li></ul>" : ""}${notice}
     <div class="auth-providers"><button class="secondary provider-button" type="button" data-auth-oauth="google" ${authBusyAction ? "disabled" : ""}><span class="provider-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.5h3.2c1.9-1.8 3.1-4.4 3.1-7.4Z"/><path fill="#34A853" d="M12 22c2.7 0 5-0.9 6.7-2.4l-3.2-2.5c-.9.6-2 1-3.5 1-2.7 0-5-1.8-5.8-4.3H2.9v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.2 13.8a6 6 0 0 1 0-3.6V7.6H2.9a10 10 0 0 0 0 8.8l3.3-2.6Z"/><path fill="#EA4335" d="M12 5.9c1.6 0 3 .5 4.1 1.6l3.1-3A10 10 0 0 0 2.9 7.6l3.3 2.6C7 7.7 9.3 5.9 12 5.9Z"/></svg></span><span>Continuar con Google</span></button><button class="secondary provider-button" type="button" data-auth-oauth="azure" ${authBusyAction ? "disabled" : ""}><span class="provider-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M13 1h10v10H13z"/><path fill="#05a6f0" d="M1 13h10v10H1z"/><path fill="#ffba08" d="M13 13h10v10H13z"/></svg></span><span>Continuar con Microsoft</span></button></div><p class="auth-divider"><span>o</span></p>
     <form class="registration-form" data-password-auth-form><label><span>Email</span><input name="email" type="email" required autocomplete="email" placeholder="usuario@example.com"></label><label><span>Contraseña</span><input name="password" type="password" required minlength="8" autocomplete="${signup ? "new-password" : "current-password"}"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Espera…" : signup ? "Crear cuenta" : "Entrar"}</button></form>
     <div class="auth-actions"><button type="button" class="text-button" data-auth-toggle>${signup ? "Ya tengo cuenta" : "Crear cuenta"}</button><button type="button" class="text-button" data-auth-reset>¿Has olvidado tu contraseña?</button></div></section></div>`;
 }
 
-function renderSecureEntryForm() {
+function renderSecureEntryForm(existing = null) {
   const optionList = (teams) => [...teams].sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" })).map((team) => `<option value="${escapeAttr(team)}">${escapeHtml(team)}</option>`).join("");
   const allTeams = BOMBOS.flat();
   const playerOptions = playerCatalog.map((player) => `<option value="${escapeAttr(`${player.full_name} — ${player.team_name}`)}"></option>`).join("");
   const catalogReady = playerCatalog.length > 0;
-  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">Inscripción inicial</p><h2>Define tu porra</h2><p>Esta inscripción se bloquea al comenzar la primera jornada.</p><form class="registration-form" data-secure-entry-form>
-    ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><input name="pot_${pot}_team" list="pot-${pot}-teams" required placeholder="Busca un equipo"><datalist id="pot-${pot}-teams">${optionList(BOMBOS[pot - 1])}</datalist></label>`).join("")}
-    <label><span>Campeón</span><input name="champion_team" list="all-teams" required placeholder="Busca un equipo"></label>
-    <label><span>Subcampeón</span><input name="runner_up_team" list="all-teams" required placeholder="Busca un equipo"></label><datalist id="all-teams">${optionList(allTeams)}</datalist>
-    <label><span>Pichichi</span><input name="top_scorer" list="players" required ${catalogReady ? "" : "disabled"} placeholder="${catalogReady ? "Busca jugador o equipo" : "Pendiente de catálogo de jugadores"}"></label><datalist id="players">${playerOptions}</datalist>
-    <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo UEFA se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>Confirmar inscripción</button></form></section></div>`;
+  const selectedPlayer = playerCatalog.find((player) => player.player_id === existing?.top_scorer_player_id);
+  const scorerValue = selectedPlayer ? `${selectedPlayer.full_name} — ${selectedPlayer.team_name}` : "";
+  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p>Podrás modificar estas elecciones hasta el inicio del torneo.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con una inscripción ya confirmada. Tiene prioridad quien confirmó antes.</span></aside><form class="registration-form" data-secure-entry-form>
+    ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><input name="pot_${pot}_team" list="pot-${pot}-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.[`pot_${pot}_team`] || "")}"><datalist id="pot-${pot}-teams">${optionList(BOMBOS[pot - 1])}</datalist></label>`).join("")}
+    <label><span>Campeón</span><input name="champion_team" list="all-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.champion_team || "")}"></label>
+    <label><span>Subcampeón</span><input name="runner_up_team" list="all-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.runner_up_team || "")}"></label><datalist id="all-teams">${optionList(allTeams)}</datalist>
+    <label><span>Pichichi</span><input name="top_scorer" list="players" required ${catalogReady ? "" : "disabled"} placeholder="${catalogReady ? "Busca jugador o equipo" : "Pendiente de catálogo de jugadores"}" value="${escapeAttr(scorerValue)}"></label><datalist id="players">${playerOptions}</datalist>
+    <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo de jugadores se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><div class="entry-actions">${existing ? "<button class=\"secondary\" type=\"button\" data-cancel-entry-edit>Cancelar</button>" : ""}<button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>${existing ? "Guardar cambios" : "Confirmar inscripción"}</button></div></form></section></div>`;
 }
 
 function renderUserRegistration() {
@@ -1327,7 +1338,18 @@ function bindEvents() {
     authNotice = response.error
       ? PorraAuth.authMessage("password-login-error")
       : authMode === "signup" ? PorraAuth.authMessage("password-signup-sent") : "";
+    if (!response.error && authMode === "signup") {
+      authSignupComplete = { email, session: response.data.session };
+      if (response.data.user) currentUser = response.data.user;
+    }
     if (!response.error && authMode === "login") currentUser = response.data.user;
+    render();
+  });
+  document.querySelector("[data-auth-continue]")?.addEventListener("click", () => {
+    const hasSession = Boolean(authSignupComplete?.session);
+    authSignupComplete = null;
+    authMode = "login";
+    if (!hasSession) authNotice = "Confirma el correo y vuelve a iniciar sesión.";
     render();
   });
   document.querySelector("[data-auth-reset]")?.addEventListener("click", () => {
@@ -1375,9 +1397,12 @@ function bindEvents() {
     if (Object.values(counts).some((count) => count > 2)) { feedback.hidden = false; feedback.textContent = "Un mismo equipo solo puede elegirse dos veces."; return; }
     if (!player) { feedback.hidden = false; feedback.textContent = "Elige un Pichichi de la lista de jugadores."; return; }
     const { error } = await supabaseClient.rpc("save_entry", { target_pot_1: entry.pot_1_team, target_pot_2: entry.pot_2_team, target_pot_3: entry.pot_3_team, target_pot_4: entry.pot_4_team, target_champion: entry.champion_team, target_runner_up: entry.runner_up_team, target_player_id: player.player_id });
-    if (error) { feedback.hidden = false; feedback.textContent = "No se pudo confirmar la inscripción. Revisa tus elecciones e inténtalo de nuevo."; return; }
+    if (error) { feedback.hidden = false; feedback.textContent = String(error.message || "").includes("TOO_SIMILAR_ENTRY") ? "Esta combinación coincide en 3 o más equipos de bombos con una inscripción anterior. Cambia al menos un equipo." : "No se pudo guardar la inscripción. Revisa tus elecciones e inténtalo de nuevo."; return; }
+    entryEditing = false;
     await loadPrivateData(); render();
   });
+  document.querySelector("[data-edit-entry]")?.addEventListener("click", () => { entryEditing = true; render(); });
+  document.querySelector("[data-cancel-entry-edit]")?.addEventListener("click", () => { entryEditing = false; render(); });
   document.querySelector("[data-secure-sign-out]")?.addEventListener("click", async () => {
     await supabaseClient.auth.signOut();
   });
@@ -1600,6 +1625,12 @@ function predictionScoreScale(round) {
 
 function isFinishedMatch(match) {
   return ["FT", "AET", "AOT", "AP", "PEN"].includes(String(match.status || "").toUpperCase());
+}
+
+function isEntryOpen() {
+  const leagueMatches = DATA.partidos.filter((match) => String(match.ronda || "").startsWith("J") && match.starts_at);
+  const firstKickoff = Math.min(...leagueMatches.map((match) => new Date(match.starts_at).getTime()));
+  return Number.isFinite(firstKickoff) && Date.now() < firstKickoff;
 }
 
 function isPredictionOpen(match) {
