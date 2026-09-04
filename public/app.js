@@ -146,7 +146,7 @@ const KO_STATUS_LABELS = {
 };
 
 let DATA = null;
-let activeTab = "porra";
+let activeTab = "reglas";
 let currentUser = null;
 let ownProfile = null;
 let ownEntry = null;
