@@ -53,7 +53,7 @@ def main() -> None:
         player_request = Request(f"{url}/rest/v1/players?on_conflict=player_id", data=json.dumps(players).encode(), method="POST", headers={"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"})
         try:
             with urlopen(player_request, timeout=30) as response:
-                print(f"Synced {len(players)} UEFA players (HTTP {response.status})")
+                print(f"Synced {len(players)} player catalogue rows (HTTP {response.status})")
         except HTTPError as error:
             if error.code != 404:
                 raise

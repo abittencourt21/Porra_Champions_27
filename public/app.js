@@ -439,7 +439,7 @@ function renderSecureEntryForm() {
     ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><input name="pot_${pot}_team" list="pot-${pot}-teams" required placeholder="Busca un equipo"><datalist id="pot-${pot}-teams">${optionList(BOMBOS[pot - 1])}</datalist></label>`).join("")}
     <label><span>Campeón</span><input name="champion_team" list="all-teams" required placeholder="Busca un equipo"></label>
     <label><span>Subcampeón</span><input name="runner_up_team" list="all-teams" required placeholder="Busca un equipo"></label><datalist id="all-teams">${optionList(allTeams)}</datalist>
-    <label><span>Pichichi</span><input name="top_scorer" list="players" required ${catalogReady ? "" : "disabled"} placeholder="${catalogReady ? "Busca jugador o equipo" : "Pendiente de catálogo UEFA"}"></label><datalist id="players">${playerOptions}</datalist>
+    <label><span>Pichichi</span><input name="top_scorer" list="players" required ${catalogReady ? "" : "disabled"} placeholder="${catalogReady ? "Busca jugador o equipo" : "Pendiente de catálogo de jugadores"}"></label><datalist id="players">${playerOptions}</datalist>
     <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo UEFA se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>Confirmar inscripción</button></form></section></div>`;
 }
 

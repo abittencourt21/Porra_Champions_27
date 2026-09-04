@@ -1,4 +1,4 @@
-"""Validated, auditable UEFA player catalogue helpers."""
+"""Validated, auditable pre-tournament player catalogue helpers."""
 from __future__ import annotations
 
 import re
@@ -18,13 +18,13 @@ def catalogue_rows(raw: Iterable[dict[str, Any]], captured_at: str | None = None
     for item in raw:
         required = ("player_id", "team_id", "team_name", "full_name", "source_url")
         if not all(str(item.get(key, "")).strip() for key in required):
-            raise ValueError("UEFA player row is missing a required source field")
+            raise ValueError("Player row is missing a required source field")
         rows.append({
             "player_id": str(item["player_id"]), "season": "2026-2027", "competition": "UCL",
             "team_id": str(item["team_id"]), "team_name": str(item["team_name"]), "full_name": str(item["full_name"]),
             "normalized_name": normalize_player_name(str(item["full_name"])), "position": item.get("position"),
             "shirt_number": item.get("shirt_number"), "uefa_list_type": item.get("uefa_list_type", "A"),
-            "source_provider": "UEFA", "source_url": str(item["source_url"]),
+            "source_provider": str(item.get("source_provider", "UEFA")), "source_url": str(item["source_url"]),
             "source_updated_at": item.get("source_updated_at", captured_at), "active": bool(item.get("active", True)),
         })
     return rows
