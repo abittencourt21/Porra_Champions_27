@@ -1,6 +1,6 @@
 ---
 type: plan
-title: Plan - Autenticación por contraseña, Google y Microsoft
+title: Plan - Autenticación por contraseña y Google
 slug: auth-password-social-login
 status: approved-autopilot
 updated: 2026-09-03

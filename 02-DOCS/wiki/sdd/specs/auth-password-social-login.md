@@ -1,13 +1,13 @@
 ---
 type: spec
-title: Spec - Autenticación por contraseña, Google y Microsoft
+title: Spec - Autenticación por contraseña y Google
 slug: auth-password-social-login
 status: approved-autopilot
 priority: 1
 updated: 2026-09-03
 ---
 
-# Autenticación por contraseña, Google y Microsoft
+# Autenticación por contraseña y Google
 
 ## Mejora UX 2026-09-04
 
@@ -18,13 +18,13 @@ updated: 2026-09-03
 
 ## Objetivo
 
-Sustituir Magic Link como acceso principal por Google, Microsoft (proveedor
-`azure` de Supabase) y email/contraseña, manteniendo GitHub Pages, Supabase
+Sustituir Magic Link como acceso principal por Google y email/contraseña,
+manteniendo GitHub Pages, Supabase
 Auth, RLS y la identidad de los participantes.
 
 ## Alcance
 
-- Mostrar, en este orden, Google, Microsoft y formulario email/contraseña.
+- Mostrar Google y formulario email/contraseña.
 - Permitir crear cuenta, entrar, recuperar contraseña y cerrarla sesión.
 - El alta requiere confirmación por email; Brevo queda solo para confirmación y
   recuperación, nunca para un acceso normal con contraseña u OAuth.
@@ -35,8 +35,7 @@ Auth, RLS y la identidad de los participantes.
 
 ## Reglas y seguridad
 
-- Google usa `signInWithOAuth({ provider: "google" })`; Microsoft usa
-  `provider: "azure"`, con `email` cuando sea necesario.
+- Google usa `signInWithOAuth({ provider: "google" })`.
 - Email/contraseña usa `signUp`, `signInWithPassword`,
   `resetPasswordForEmail` y `updateUser`; la contraseña debe tener al menos
   ocho caracteres antes de llamar a Supabase.
@@ -52,16 +51,14 @@ Auth, RLS y la identidad de los participantes.
 
 ## Configuración externa obligatoria
 
-En Supabase: Email + Password, Google y Azure activos; Site URL y Redirect URL
+En Supabase: Email + Password y Google activos; Site URL y Redirect URL
 `https://abittencourt21.github.io/Porra_Champions_27/`; SMTP Brevo solo para
-confirmaciones y recuperación. En las consolas Google y Microsoft se registra
-exactamente el callback que indique Supabase y sus client secrets se guardan
-solo allí. Azure debe admitir cuentas personales, no únicamente el tenant del
-propietario.
+confirmaciones y recuperación. En Google se registra exactamente el callback
+que indique Supabase y su client secret se guarda solo allí.
 
 ## Aceptación
 
-1. Sin sesión se ven Google, Microsoft y email/contraseña; no Magic Link.
+1. Sin sesión se ven Google y email/contraseña; no Magic Link.
 2. OAuth y confirmación/recuperación vuelven al subpath de Pages con sesión.
 3. Una contraseña válida inicia sesión sin correo; el alta y la recuperación
    responden de forma segura y comprensible.

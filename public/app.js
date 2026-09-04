@@ -434,7 +434,7 @@ function renderAuthExperience() {
   if (reset) return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Nueva contraseña</p><h2>Recupera tu acceso</h2><p>Define una contraseña nueva para tu cuenta.</p>${notice}<form class="registration-form" data-password-update-form><label><span>Nueva contraseña</span><input name="password" type="password" required minlength="8" autocomplete="new-password"></label><label><span>Repite la contraseña</span><input name="confirm_password" type="password" required minlength="8" autocomplete="new-password"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Actualizando…" : "Guardar contraseña"}</button></form></section></div>`;
   if (authMode === "reset-request") return `<div class="user-shell"><section class="user-card auth-card"><p class="eyebrow">Recuperar contraseña</p><h2>Recupera tu acceso</h2><p>Te enviaremos instrucciones si existe una cuenta con ese email.</p>${notice}<form class="registration-form" data-password-reset-form><label><span>Email</span><input name="email" type="email" required autocomplete="email" placeholder="usuario@example.com"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Enviando…" : "Enviar instrucciones"}</button></form><div class="auth-actions"><button type="button" class="text-button" data-auth-login>Volver a entrar</button></div></section></div>`;
   return `<div class="user-shell"><section class="user-card auth-card ${signup ? "auth-signup-card" : ""}"><p class="eyebrow">${signup ? "Nueva cuenta" : "Acceso seguro"}</p><h2>${signup ? "Crea tu cuenta" : "Entra en tu porra"}</h2><p>${signup ? "Crea una cuenta para guardar tu inscripción y continuar desde cualquier dispositivo." : "Accede con tu cuenta habitual. Tus datos y pronósticos siguen siendo privados."}</p>${signup ? "<ul class=\"auth-benefits\"><li>Un perfil privado y protegido</li><li>Pronósticos guardados por partido</li><li>Inscripción editable hasta el inicio</li></ul>" : ""}${notice}
-    <div class="auth-providers"><button class="secondary provider-button" type="button" data-auth-oauth="google" ${authBusyAction ? "disabled" : ""}><span class="provider-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.5h3.2c1.9-1.8 3.1-4.4 3.1-7.4Z"/><path fill="#34A853" d="M12 22c2.7 0 5-0.9 6.7-2.4l-3.2-2.5c-.9.6-2 1-3.5 1-2.7 0-5-1.8-5.8-4.3H2.9v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.2 13.8a6 6 0 0 1 0-3.6V7.6H2.9a10 10 0 0 0 0 8.8l3.3-2.6Z"/><path fill="#EA4335" d="M12 5.9c1.6 0 3 .5 4.1 1.6l3.1-3A10 10 0 0 0 2.9 7.6l3.3 2.6C7 7.7 9.3 5.9 12 5.9Z"/></svg></span><span>Continuar con Google</span></button><button class="secondary provider-button" type="button" data-auth-oauth="azure" ${authBusyAction ? "disabled" : ""}><span class="provider-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M13 1h10v10H13z"/><path fill="#05a6f0" d="M1 13h10v10H1z"/><path fill="#ffba08" d="M13 13h10v10H13z"/></svg></span><span>Continuar con Microsoft</span></button></div><p class="auth-divider"><span>o</span></p>
+    <div class="auth-providers"><button class="secondary provider-button" type="button" data-auth-oauth="google" ${authBusyAction ? "disabled" : ""}><span class="provider-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.5h3.2c1.9-1.8 3.1-4.4 3.1-7.4Z"/><path fill="#34A853" d="M12 22c2.7 0 5-0.9 6.7-2.4l-3.2-2.5c-.9.6-2 1-3.5 1-2.7 0-5-1.8-5.8-4.3H2.9v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.2 13.8a6 6 0 0 1 0-3.6V7.6H2.9a10 10 0 0 0 0 8.8l3.3-2.6Z"/><path fill="#EA4335" d="M12 5.9c1.6 0 3 .5 4.1 1.6l3.1-3A10 10 0 0 0 2.9 7.6l3.3 2.6C7 7.7 9.3 5.9 12 5.9Z"/></svg></span><span>Continuar con Google</span></button></div><p class="auth-divider"><span>o</span></p>
     <form class="registration-form" data-password-auth-form><label><span>Email</span><input name="email" type="email" required autocomplete="email" placeholder="usuario@example.com"></label><label><span>Contraseña</span><input name="password" type="password" required minlength="8" autocomplete="${signup ? "new-password" : "current-password"}"></label><button class="primary" type="submit" ${authBusyAction ? "disabled" : ""}>${authBusyAction ? "Espera…" : signup ? "Crear cuenta" : "Entrar"}</button></form>
     <div class="auth-actions"><button type="button" class="text-button" data-auth-toggle>${signup ? "Ya tengo cuenta" : "Crear cuenta"}</button><button type="button" class="text-button" data-auth-reset>¿Has olvidado tu contraseña?</button></div></section></div>`;
 }
@@ -958,7 +958,7 @@ function renderRules() {
         <div><h2>Reglas de la porra</h2><p>Inscríbete una vez, confirma tus pronósticos y sigue tus puntos durante la Champions 2026/27.</p></div>
         <div class="rules-kpi"><div><strong>4</strong><span>Clubes por persona</span></div><div><strong>8</strong><span>Jornadas de liga</span></div><div><strong>−1 h</strong><span>Cierre por partido</span></div></div>
       </section>
-      <nav class="rules-links" aria-label="Secciones de reglas"><a href="#reglas-inscripcion">Inscripción</a><a href="#reglas-pronosticos">Pronósticos</a><a href="#reglas-puntuacion">Puntuación</a><a href="#reglas-bonus">Bonus</a></nav>
+      <nav class="rules-links" aria-label="Secciones de reglas"><a href="#reglas-inscripcion">Inscripción</a><a href="#reglas-pronosticos">Pronósticos</a><a href="#reglas-premios">Premios</a><a href="#reglas-puntuacion">Puntuación</a><a href="#reglas-bonus">Bonus</a></nav>
 
       <section class="rules-block rules-full" id="reglas-inscripcion">
         <h2>1. Inscripción</h2>
@@ -970,8 +970,16 @@ function renderRules() {
         <ul><li>Puedes guardar cada partido por separado o varios a la vez.</li><li>El plazo termina una hora antes del inicio oficial, en horario de Madrid.</li><li>Un partido sin pronóstico confirmado a tiempo suma 0 puntos.</li></ul>
       </section>
 
+      <section class="rules-block rules-full" id="reglas-premios">
+        <h2>3. Reparto de premios</h2>
+        <p>El bote final se reparte así:</p>
+        <table class="rules-table"><thead><tr><th>Clasificación</th><th>Porcentaje del bote</th></tr></thead><tbody>
+          <tr><td>1.º clasificación general</td><td>60%</td></tr><tr><td>2.º clasificación general</td><td>20%</td></tr><tr><td>Ganador Premio Quinielista</td><td>20%</td></tr>
+        </tbody></table>
+      </section>
+
       <section class="rules-block rules-full" id="reglas-puntuacion">
-        <h2>3. Puntuación</h2>
+        <h2>4. Puntuación</h2>
         <h3>Elecciones de equipos</h3>
         <p>Tus cuatro clubes suman <strong>3 puntos por victoria</strong> y <strong>1 por empate</strong>. También reciben el bonus de su bombo al acabar entre los ocho primeros o al alcanzar octavos desde los puestos 9–24, y por cada ronda superada desde octavos.</p>
         <table class="rules-table"><thead><tr><th>Bombo original</th><th>Bonus por clasificación o ronda</th></tr></thead><tbody>
@@ -991,7 +999,7 @@ function renderRules() {
       </section>
 
       <section class="rules-block rules-full" id="reglas-bonus">
-        <h2>4. Bonus y clasificación</h2>
+        <h2>5. Bonus y clasificación</h2>
         <ul><li>Los ocho primeros de la fase liga reciben el bonus correspondiente; también los ocho equipos que accedan a octavos desde los puestos 9–24.</li><li>Los bonus de avance empiezan en octavos.</li><li>La clasificación general aplica los criterios UEFA de desempate.</li></ul>
       </section>
     </div>`;
@@ -1313,7 +1321,6 @@ function bindEvents() {
     authNotice = "";
     render();
     const options = { redirectTo: PorraAuth.canonicalAuthRedirect() };
-    if (button.dataset.authOauth === "azure") options.scopes = "email";
     const { error } = await supabaseClient.auth.signInWithOAuth({ provider: button.dataset.authOauth, options });
     if (error) { authBusyAction = ""; authNotice = "No se pudo iniciar el acceso con ese proveedor. Inténtalo de nuevo."; render(); }
   }));
