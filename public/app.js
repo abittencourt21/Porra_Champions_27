@@ -597,8 +597,7 @@ function renderParticipant(participant, index) {
         <div class="rank">${rank}${rankDelta(participant)}</div>
         <div>
           <div class="alias">${escapeHtml(participant.alias)}</div>
-          <div class="teams">${(participant.equipos || []).map((team) => `<span class="chip">${teamLabel(team, true)}</span>`).join("")}</div>
-          ${isOpen ? "" : participantSummary(participant)}
+          ${isOpen ? "" : `<div class="teams">${(participant.equipos || []).map((team) => `<span class="chip">${teamLabel(team, true)}</span>`).join("")}</div>${participantSummary(participant)}`}
         </div>
         <div class="score">${participant.puntos_total || 0}<span>puntos</span></div>
       </button>
