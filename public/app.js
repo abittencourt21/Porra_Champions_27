@@ -945,7 +945,7 @@ function renderBombos() {
         </tbody>
       </table>
     </div>
-    <p class="section-note" style="margin-top:10px">Bombos oficiales de la fase liga UEFA 2025/26.</p>
+    <p class="section-note" style="margin-top:10px">Bombos oficiales de la fase liga UEFA 2026/27.</p>
   `;
 }
 

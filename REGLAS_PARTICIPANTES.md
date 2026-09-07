@@ -1,8 +1,7 @@
 # Reglas de la Porra Champions League
 
-La interfaz se publica con una referencia histórica de la UEFA Champions
-League 2025/26. Sirve para validar el MVP y sus reglas; la fecha de una futura
-edición, formulario y pagos se comunicarán antes de abrir inscripciones.
+La interfaz se publica para la UEFA Champions League 2026/27. El calendario,
+las inscripciones y las reglas de esta edición se muestran en la aplicación.
 
 ## Inscripción y bombos
 
