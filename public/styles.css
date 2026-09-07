@@ -714,7 +714,7 @@ a:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 2px; }
 
 .hero-stat.prize-split strong {
   color: var(--usa);
-  font-size: clamp(26px, 4.6vw, 38px);
+  font-size: clamp(21px, 3.8vw, 34px);
 }
 
 .hero-stat span {

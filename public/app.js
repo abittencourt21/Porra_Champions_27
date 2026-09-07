@@ -336,8 +336,8 @@ function renderChrome() {
         <span>Bote estimado</span>
       </div>
       <div class="hero-stat prize-split">
-        <strong>${Math.round(pot * .8)}&euro; / ${Math.round(pot * .2)}&euro;</strong>
-        <span>Reparto 1&ordm; / 2&ordm;</span>
+        <strong>${Math.round(pot * .6)}&euro; / ${Math.round(pot * .2)}&euro; / ${Math.round(pot * .2)}&euro;</strong>
+        <span>1&ordm; / 2&ordm; / Quinielista</span>
       </div>
       <p>${escapeHtml(DATA.participantes.length)} participantes · ${escapeHtml(DATA.partidos.length)} partidos cargados · ${escapeHtml(DATA.goleadores.length)} goleadores</p>
     </div>
