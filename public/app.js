@@ -504,19 +504,13 @@ function renderPredictionRow(match, existing) {
       <div class="prediction-teams">
         ${closingNotice}
         <strong>${escapeHtml(match.home_team)}</strong>
-        <span>vs</span>
+        <div class="prediction-scores">
+          <label><span class="sr-only">Goles ${escapeHtml(match.home_team)}</span><input name="match-${match.matchid}-home" type="number" min="0" max="10" value="${home}" ${editable ? "" : "disabled"} /></label>
+          <span class="prediction-separator" aria-hidden="true">–</span>
+          <label><span class="sr-only">Goles ${escapeHtml(match.away_team)}</span><input name="match-${match.matchid}-away" type="number" min="0" max="10" value="${away}" ${editable ? "" : "disabled"} /></label>
+        </div>
         <strong>${escapeHtml(match.away_team)}</strong>
-        <div class="muted">${escapeHtml(match.fecha)} · ${escapeHtml(match.ronda)}</div>
-      </div>
-      <div class="prediction-scores">
-        <label>
-          <span>Local</span>
-          <input name="match-${match.matchid}-home" type="number" min="0" max="10" value="${home}" ${editable ? "" : "disabled"} />
-        </label>
-        <label>
-          <span>Visitante</span>
-          <input name="match-${match.matchid}-away" type="number" min="0" max="10" value="${away}" ${editable ? "" : "disabled"} />
-        </label>
+        <div class="prediction-meta muted">${escapeHtml(match.fecha)} · ${escapeHtml(match.ronda)}</div>
         ${officialResult}
       </div>
       <div class="prediction-status ${editable ? (existing ? "saved" : "pending") : "locked"}" title="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}" aria-label="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}">${editable ? (existing ? "✓" : "◷") : "🔒"}</div>
@@ -568,6 +562,7 @@ function renderRanking() {
       <div>
         <h2>Ranking</h2>
         <p class="section-note">Ordena, busca y compara participantes. La clasificación general usa criterios UEFA de desempate: puntos, diferencia de goles, goles a favor y, si sigue el empate, mejor resultado en enfrentamientos directos.</p>
+        <p class="ranking-prizes"><span><strong>60%</strong> 1.º general</span><span><strong>20%</strong> 2.º general</span><span><strong>20%</strong> Quinielista</span></p>
       </div>
     </div>
     ${rankingModeTabs()}
@@ -588,6 +583,7 @@ function renderQuinielistaRanking() {
 
 function renderParticipant(participant, index) {
   const breakdown = participant.desglose || {};
+  const teamData = participant.team_data?.length ? participant.team_data : (participant.equipos || []).map((team) => ({ team, g_pts: 0, ko_pts: 0, rondas_pasadas: [] }));
   const isOpen = openAliases.has(participant.alias);
   const rank = participant.rank_actual || index + 1;
   return `
@@ -609,7 +605,7 @@ function renderParticipant(participant, index) {
           ${metric("Bonus", breakdown.bonus_final)}
         </div>
         <div class="team-grid">
-          ${(participant.team_data || []).map(renderTeamData).join("")}
+          ${teamData.map(renderTeamData).join("")}
         </div>
         <div class="teams" style="margin-top:12px">
           <span class="chip"><strong>Campeón</strong> ${teamLabel(participant.campeon || "-")}</span>
@@ -956,7 +952,7 @@ function renderRules() {
     <div class="rules rules-compact">
       <section class="rules-hero">
         <div><h2>Reglas de la porra</h2><p>Inscríbete una vez, confirma tus pronósticos y sigue tus puntos durante la Champions 2026/27.</p></div>
-        <div class="rules-kpi"><div><strong>4</strong><span>Clubes por persona</span></div><div><strong>8</strong><span>Jornadas de liga</span></div><div><strong>−1 h</strong><span>Cierre por partido</span></div></div>
+        <div class="rules-kpi"><div><strong>4</strong><span>Clubes por persona</span></div><div><strong>8</strong><span>Jornadas de liga</span></div></div>
       </section>
       <nav class="rules-links" aria-label="Secciones de reglas"><a href="#reglas-inscripcion">Inscripción</a><a href="#reglas-pronosticos">Pronósticos</a><a href="#reglas-premios">Premios</a><a href="#reglas-puntuacion">Puntuación</a><a href="#reglas-bonus">Bonus</a></nav>
 

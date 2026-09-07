@@ -379,6 +379,8 @@ main {
 
 .prediction-row {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
   gap: 10px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -388,9 +390,15 @@ main {
 
 .prediction-scores {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
+
+.prediction-scores input { width: 38px; min-width: 38px; padding: 7px 3px; text-align: center; }
+.prediction-scores label { display: block; }
+.prediction-separator { color: var(--muted); font-weight: 800; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .prediction-result {
   flex-basis: 100%;
@@ -406,19 +414,6 @@ main {
   box-shadow: inset 3px 0 0 #d97706;
 }
 
-/* La información principal se lee de izquierda a derecha en escritorio. */
-@media (min-width: 761px) {
-  .prediction-row {
-    grid-template-columns: minmax(120px, 1fr) auto minmax(120px, 1fr);
-    align-items: center;
-  }
-
-  .prediction-teams { grid-column: 1 / -1; grid-row: 1; }
-  .prediction-scores { grid-column: 2; grid-row: 2; }
-  .prediction-status { grid-column: 3; grid-row: 1; justify-self: end; }
-  .prediction-actions { grid-column: 3; grid-row: 2; justify-content: flex-end; }
-}
-
 @media (min-width: 1100px) {
   [data-secure-prediction-form] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -429,6 +424,12 @@ main {
   align-items: center;
   gap: 10px;
 }
+
+.prediction-teams > strong:first-of-type { text-align: right; }
+.prediction-teams > strong:last-of-type { text-align: left; }
+.prediction-meta, .prediction-result { grid-column: 1 / -1; }
+.prediction-meta { margin-top: 2px; text-align: center; }
+.prediction-status, .prediction-actions { justify-self: end; }
 
 .prediction-teams strong:first-child, .prediction-teams strong:last-of-type { text-align: center; }
 .prediction-teams > span { color: var(--muted); font-size: 11px; font-weight: 700; }
@@ -523,6 +524,9 @@ main {
 }
 
 .ranking-card.current-user { border-color: var(--gold-bright); box-shadow: inset 4px 0 0 var(--gold-bright); }
+.ranking-prizes { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.ranking-prizes span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; color: var(--muted); font-size: 12px; }
+.ranking-prizes strong { color: var(--gold-bright); }
 
 .ranking-mode-tabs { display: flex; gap: 8px; margin: 12px 0; }
 .ranking-mode-tabs button { border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; background: var(--surface); color: var(--muted); cursor: pointer; font-weight: 700; }
