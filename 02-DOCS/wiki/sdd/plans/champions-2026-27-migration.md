@@ -69,6 +69,7 @@ updated: 2026-08-31
 3. Adaptar el motor y la actualización secundaria, después regenerar datos.
 4. Adaptar web y estilos a los nuevos contratos y a la cabecera.
 5. Ejecutar pruebas, generación y revisión visual; documentar evidencia.
+6. Aplicar la excepción operativa de J1 como jornada de cortesía: mantener altas hasta J2, excluir solo los puntos de quiniela y conservar la puntuación de equipos.
 
 ## Tasks
 
@@ -81,6 +82,7 @@ updated: 2026-08-31
 | T005 |  | Añadir contraste SportsDB y escudos seguros | Pruebas de discrepancia y escudo ausente verdes | T002 | Spec Acceptance 3,7 |
 | T006 |  | Adaptar web, cabecera y vistas de equipos/fases | Datos generados y comprobación manual sin imágenes rotas | T002,T003,T005 | Spec Acceptance 3,4,5,6 |
 | T007 |  | Ejecutar validación integral y documentar evidencia | `python -m unittest discover -s tests` y build de datos salen 0 | T002-T006 | All acceptance |
+| T008 |  | Configurar jornada de cortesía y cierre de altas en J2 | UI, RPC y ranking excluyen solo la quiniela de J1 | T007 | Clarification 2026-09-07 |
 
 ## Review Workload Forecast
 

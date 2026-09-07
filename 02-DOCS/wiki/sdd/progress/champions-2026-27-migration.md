@@ -1,5 +1,11 @@
 # Progreso - champions-2026-27-migration
 
+## T008 - 2026-09-07
+
+- status: completed
+- scope: J1 es jornada de cortesía para la quiniela y el Premio Quinielista; los puntos de equipos y la clasificación general continúan computándose desde J1. Las altas cierran al inicio de J2.
+- evidence: validación de sintaxis de `public/app.js`, 60 pruebas Python y regeneración de `public/datos.json` correctas.
+
 ## T001/T002 - 2026-08-31
 
 - status: in_progress

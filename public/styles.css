@@ -629,6 +629,11 @@ a:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 2px; }
   color: var(--muted);
 }
 
+.prediction-points.courtesy {
+  background: var(--surface2);
+  color: var(--muted);
+}
+
 .prediction-status {
   display: inline-flex;
   align-items: center;

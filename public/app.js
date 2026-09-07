@@ -403,6 +403,7 @@ function renderSecureUserExperience() {
     <form class="registration-form" data-secure-profile-form><label><span>Alias</span><input name="alias" required minlength="2" maxlength="32" placeholder="Tu nombre visible"></label><button class="primary" type="submit">Guardar perfil</button></form></section></div>`;
   if (!ownEntry || entryEditing) return renderSecureEntryForm(ownEntry);
   const matches = DATA.partidos.filter((match) => match.ronda === predictionRound);
+  const courtesyRound = matches[0]?.ronda === "J01";
   const [exactPoints, outcomePoints] = predictionScoreScale(matches[0]?.ronda);
   const completed = matches.filter((match) => ["FT", "AET", "AOT", "AP", "PEN"].includes(String(match.status || "").toUpperCase()));
   const roundPoints = completed.reduce((total, match) => total + predictionScorePoints(ownPredictions[String(match.matchid)], match), 0);
@@ -414,12 +415,12 @@ function renderSecureUserExperience() {
   const lastSaved = Object.values(ownPredictions).map((prediction) => prediction.confirmed_at).filter(Boolean).sort().at(-1);
   const entryAction = isEntryOpen()
     ? `<button class="secondary" data-edit-entry>Modificar selección</button>`
-    : `<p class="entry-locked">Inscripción cerrada desde el inicio del torneo.</p>`;
+    : `<p class="entry-locked">Inscripción cerrada desde el inicio de J2.</p>`;
   return `<div class="user-shell"><section class="user-card"><div><p class="eyebrow">Usuario activo</p><h2>${escapeHtml(ownProfile.alias)}</h2><p>${escapeHtml(currentUser.email)}</p></div><div class="user-actions">${entryAction}<button class="secondary" data-secure-sign-out>Salir</button></div></section>
     <section class="user-dashboard" aria-label="Resumen de mi porra"><div><span>Puntos totales</span><strong>${totalPoints}</strong></div><div><span>Fase activa</span><strong>${escapeHtml(predictionRoundLabel(predictionRound))}</strong></div><div><span>Pendientes abiertos</span><strong>${pending}</strong></div>${lastSaved ? `<small>Último guardado: ${escapeHtml(formatLocalDateTime(lastSaved))}</small>` : ""}</section>
-    <section class="user-card user-card-alt"><p class="eyebrow">Pronósticos</p><h3>Jornada 1</h3><p>Puedes guardar partidos individuales o todos los que hayas rellenado. El cierre se valida en la base de datos una hora antes.</p>
-      <p class="prediction-legend" aria-label="Puntuación de esta fase"><span>Exacto <strong>${exactPoints} pts</strong></span><span>1X2 <strong>${outcomePoints} pt${outcomePoints === 1 ? "" : "s"}</strong></span></p>
-      <p class="prediction-round-summary"><strong>${roundPoints} pts</strong>${completed.length ? ` · ${exacts} exacto${exacts === 1 ? "" : "s"} · ${outcomes} 1X2` : " · Aún no hay partidos finalizados"}</p>
+    <section class="user-card user-card-alt"><p class="eyebrow">Pronósticos</p><h3>${escapeHtml(predictionRoundLabel(predictionRound))}</h3><p>Puedes guardar partidos individuales o todos los que hayas rellenado. El cierre se valida en la base de datos una hora antes.</p>
+      <p class="prediction-legend" aria-label="Puntuación de esta fase">${courtesyRound ? "<span>Jornada de cortesía <strong>sin puntos de quiniela</strong></span>" : `<span>Exacto <strong>${exactPoints} pts</strong></span><span>1X2 <strong>${outcomePoints} pt${outcomePoints === 1 ? "" : "s"}</strong></span>`}</p>
+      <p class="prediction-round-summary">${courtesyRound ? "J1 se puede pronosticar, pero no puntúa en la quiniela ni en el Premio Quinielista." : `<strong>${roundPoints} pts</strong>${completed.length ? ` · ${exacts} exacto${exacts === 1 ? "" : "s"} · ${outcomes} 1X2` : " · Aún no hay partidos finalizados"}`}</p>
       <form class="prediction-form" data-secure-prediction-form>${matches.map((match) => renderPredictionRow(match, ownPredictions[String(match.matchid)])).join("")}<button class="primary" type="submit">Guardar pronósticos rellenados</button></form></section></div>`;
 }
 
@@ -446,7 +447,7 @@ function renderSecureEntryForm(existing = null) {
   const catalogReady = playerCatalog.length > 0;
   const selectedPlayer = playerCatalog.find((player) => player.player_id === existing?.top_scorer_player_id);
   const scorerValue = selectedPlayer ? `${selectedPlayer.full_name} — ${selectedPlayer.team_name}` : "";
-  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p>Podrás modificar estas elecciones hasta el inicio del torneo.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con una inscripción ya confirmada. Tiene prioridad quien confirmó antes.</span></aside><form class="registration-form" data-secure-entry-form>
+  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p>Podrás modificar estas elecciones hasta el inicio del primer partido de J2.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con una inscripción ya confirmada. Tiene prioridad quien confirmó antes.</span></aside><form class="registration-form" data-secure-entry-form>
     ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><input name="pot_${pot}_team" list="pot-${pot}-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.[`pot_${pot}_team`] || "")}"><datalist id="pot-${pot}-teams">${optionList(BOMBOS[pot - 1])}</datalist></label>`).join("")}
     <label><span>Campeón</span><input name="champion_team" list="all-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.champion_team || "")}"></label>
     <label><span>Subcampeón</span><input name="runner_up_team" list="all-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.runner_up_team || "")}"></label><datalist id="all-teams">${optionList(allTeams)}</datalist>
@@ -491,6 +492,7 @@ function renderPredictionRow(match, existing) {
   const home = draft.home_score ?? existing?.home_score ?? "";
   const away = draft.away_score ?? existing?.away_score ?? "";
   const finished = ["FT", "AET", "AOT", "AP", "PEN"].includes(String(match.status || "").toUpperCase());
+  const courtesy = match.ronda === "J01";
   const points = finished ? predictionScorePoints(existing, match) : null;
   const scoreKind = finished ? predictionScoreKind(existing, match) : "";
   const officialHome = Number(match.home_score_90 ?? match.home_score);
@@ -514,7 +516,7 @@ function renderPredictionRow(match, existing) {
         ${officialResult}
       </div>
       <div class="prediction-status ${editable ? (existing ? "saved" : "pending") : "locked"}" title="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}" aria-label="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}">${editable ? (existing ? "✓" : "◷") : "🔒"}</div>
-      <div class="prediction-actions">${finished ? `<span class="prediction-points ${scoreKind}" title="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}" aria-label="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}: ${points} puntos">${points}p</span>` : editable ? `<button class="secondary icon-button" type="button" data-random-prediction="${escapeAttr(match.matchid)}" title="Generar marcador aleatorio" aria-label="Generar marcador aleatorio">🎲</button><button class="secondary icon-button" type="button" data-save-prediction="${escapeAttr(match.matchid)}" title="Guardar este partido" aria-label="Guardar este partido" disabled>💾</button>` : ""}</div>
+      <div class="prediction-actions">${finished ? courtesy ? `<span class="prediction-points courtesy" title="Jornada de cortesía: este pronóstico no puntúa" aria-label="Jornada de cortesía: este pronóstico no puntúa">—</span>` : `<span class="prediction-points ${scoreKind}" title="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}" aria-label="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}: ${points} puntos">${points}p</span>` : editable ? `<button class="secondary icon-button" type="button" data-random-prediction="${escapeAttr(match.matchid)}" title="Generar marcador aleatorio" aria-label="Generar marcador aleatorio">🎲</button><button class="secondary icon-button" type="button" data-save-prediction="${escapeAttr(match.matchid)}" title="Guardar este partido" aria-label="Guardar este partido" disabled>💾</button>` : ""}</div>
     </div>
   `;
 }
@@ -958,12 +960,12 @@ function renderRules() {
 
       <section class="rules-block rules-full" id="reglas-inscripcion">
         <h2>1. Inscripción</h2>
-        <ul><li>Elige un club de cada bombo, campeón, subcampeón y pichichi.</li><li>La inscripción se cierra al comenzar la primera jornada.</li><li>Los datos privados solo los puede consultar y modificar su titular.</li></ul>
+        <ul><li>Elige un club de cada bombo, campeón, subcampeón y pichichi.</li><li>Excepcionalmente, la inscripción se cierra al comenzar J2.</li><li>Los datos privados solo los puede consultar y modificar su titular.</li></ul>
       </section>
 
       <section class="rules-block rules-full" id="reglas-pronosticos">
         <h2>2. Pronósticos</h2>
-        <ul><li>Puedes guardar cada partido por separado o varios a la vez.</li><li>El plazo termina una hora antes del inicio oficial, en horario de Madrid.</li><li>Un partido sin pronóstico confirmado a tiempo suma 0 puntos.</li></ul>
+        <ul><li>Puedes guardar cada partido por separado o varios a la vez.</li><li>El plazo termina una hora antes del inicio oficial, en horario de Madrid.</li><li>J1 es una jornada de cortesía: los pronósticos se guardan, pero no puntúan en la quiniela ni en el Premio Quinielista.</li><li>Los puntos de los equipos elegidos sí se computan desde J1, incluida la clasificación general.</li><li>Un partido sin pronóstico confirmado a tiempo suma 0 puntos.</li></ul>
       </section>
 
       <section class="rules-block rules-full" id="reglas-premios">
@@ -987,7 +989,7 @@ function renderRules() {
         </tbody></table>
         <p>El bonus de campeón acertado y el de campeón incluido entre tus cuatro clubes no se acumulan.</p>
         <h3>Quiniela</h3>
-        <p>Se usa el resultado a los 90 minutos: el marcador exacto recibe la puntuación mayor y el 1X2 acierta victoria local, empate o victoria visitante.</p>
+        <p>Se usa el resultado a los 90 minutos: el marcador exacto recibe la puntuación mayor y el 1X2 acierta victoria local, empate o victoria visitante. La tabla se aplica desde J2: J1 es jornada de cortesía y no genera puntos de quiniela.</p>
         <table class="rules-table"><thead><tr><th>Fase</th><th>Exacto</th><th>1X2</th></tr></thead><tbody>
           <tr><td>Fase liga</td><td>3</td><td>1</td></tr><tr><td>Play-off</td><td>3</td><td>1</td></tr><tr><td>Octavos</td><td>6</td><td>2</td></tr><tr><td>Cuartos</td><td>8</td><td>3</td></tr><tr><td>Semifinal</td><td>10</td><td>4</td></tr><tr><td>Final</td><td>12</td><td>5</td></tr>
         </tbody></table>
@@ -1605,6 +1607,7 @@ function bindEvents() {
 }
 
 function predictionScorePoints(prediction, match) {
+  if (match?.ronda === "J01") return 0;
   const kind = predictionScoreKind(prediction, match);
   if (kind === "miss") return 0;
   const [exactPoints, outcomePoints] = predictionScoreScale(match.ronda);
@@ -1631,9 +1634,11 @@ function isFinishedMatch(match) {
 }
 
 function isEntryOpen() {
+  const j2Matches = DATA.partidos.filter((match) => match.ronda === "J02" && match.starts_at);
   const leagueMatches = DATA.partidos.filter((match) => String(match.ronda || "").startsWith("J") && match.starts_at);
-  const firstKickoff = Math.min(...leagueMatches.map((match) => new Date(match.starts_at).getTime()));
-  return Number.isFinite(firstKickoff) && Date.now() < firstKickoff;
+  const matchesForDeadline = j2Matches.length ? j2Matches : leagueMatches;
+  const j2Kickoff = Math.min(...matchesForDeadline.map((match) => new Date(match.starts_at).getTime()));
+  return Number.isFinite(j2Kickoff) && Date.now() < j2Kickoff;
 }
 
 function isPredictionOpen(match) {

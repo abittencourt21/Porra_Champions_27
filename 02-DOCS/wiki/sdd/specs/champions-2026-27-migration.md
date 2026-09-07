@@ -73,6 +73,7 @@ Los participantes eligen un club de cada bombo y consultan partidos, resultados 
 
 ## Clarifications
 
+- 2026-09-07 — Jornada de cortesía: la inscripción permanece abierta hasta el inicio de J2. Los pronósticos de J1 se pueden guardar, pero no aportan puntos de quiniela ni cuentan para el Premio Quinielista; la puntuación de los equipos elegidos se mantiene desde J1, incluida la clasificación general.
 - 2026-09-01 — Retroalimentación de puntuación: al finalizar un partido, el indicador de puntos diferencia visualmente marcador exacto, 1X2 acertado y fallo.
 - 2026-09-02 — Reglas y play-off: las reglas se condensan en una lectura de columna única; el play-off de acceso a octavos puntúa 3/1 en quiniela, como la fase liga, pero no concede bonus de progreso de equipos.
 - 2026-09-01 — Lectura de resultados: cada jornada muestra una leyenda compacta de puntuación (exacto y 1X2); los partidos finalizados exponen resultado oficial a 90 minutos y los puntos logrados.
