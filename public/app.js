@@ -1345,7 +1345,10 @@ function bindEvents() {
       : authMode === "signup" ? PorraAuth.authMessage("password-signup-sent") : "";
     if (!response.error && authMode === "signup") {
       authSignupComplete = { email, session: response.data.session };
-      if (response.data.user) currentUser = response.data.user;
+      // Supabase may create the user before a session exists when email
+      // confirmation is enabled. Do not expose private-profile actions until
+      // the browser has an authenticated session and RLS can verify auth.uid().
+      currentUser = response.data.session?.user || null;
     }
     if (!response.error && authMode === "login") currentUser = response.data.user;
     render();
