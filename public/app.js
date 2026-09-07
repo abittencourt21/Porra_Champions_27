@@ -450,7 +450,7 @@ function renderSecureEntryForm(existing = null) {
   const catalogReady = playerCatalog.length > 0;
   const selectedPlayer = playerCatalog.find((player) => player.player_id === existing?.top_scorer_player_id);
   const scorerValue = selectedPlayer ? `${selectedPlayer.full_name} — ${selectedPlayer.team_name}` : "";
-  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p>Podrás modificar estas elecciones hasta el inicio del primer partido de J2.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con una inscripción ya confirmada. Tiene prioridad quien confirmó antes.</span></aside><form class="registration-form" data-secure-entry-form>
+  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p>Podrás modificar estas elecciones hasta el inicio del primer partido de J2.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con ninguna otra inscripción confirmada, también al modificar.</span></aside><form class="registration-form" data-secure-entry-form>
     ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><select name="pot_${pot}_team" required aria-label="Equipo del Bombo ${pot}">${teamSelectOptions(BOMBOS[pot - 1], existing?.[`pot_${pot}_team`] || "", "Selecciona un equipo")}</select></label>`).join("")}
     <label><span>Campeón</span><select name="champion_team" required aria-label="Campeón">${teamSelectOptions(allTeams, existing?.champion_team || "", "Selecciona un equipo")}</select></label>
     <label><span>Subcampeón</span><select name="runner_up_team" required aria-label="Subcampeón">${teamSelectOptions(allTeams, existing?.runner_up_team || "", "Selecciona un equipo")}</select></label>
@@ -1407,7 +1407,7 @@ function bindEvents() {
     if (Object.values(counts).some((count) => count > 2)) { feedback.hidden = false; feedback.textContent = "Un mismo equipo solo puede elegirse dos veces."; return; }
     if (!player) { feedback.hidden = false; feedback.textContent = "Elige un Pichichi de la lista de jugadores."; return; }
     const { error } = await supabaseClient.rpc("save_entry", { target_pot_1: entry.pot_1_team, target_pot_2: entry.pot_2_team, target_pot_3: entry.pot_3_team, target_pot_4: entry.pot_4_team, target_champion: entry.champion_team, target_runner_up: entry.runner_up_team, target_player_id: player.player_id });
-    if (error) { feedback.hidden = false; feedback.textContent = String(error.message || "").includes("TOO_SIMILAR_ENTRY") ? "Esta combinación coincide en 3 o más equipos de bombos con una inscripción anterior. Cambia al menos un equipo." : "No se pudo guardar la inscripción. Revisa tus elecciones e inténtalo de nuevo."; return; }
+    if (error) { feedback.hidden = false; feedback.textContent = String(error.message || "").includes("TOO_SIMILAR_ENTRY") ? "Esta combinación coincide en 3 o más equipos de bombos con otra inscripción. Cambia al menos un equipo." : "No se pudo guardar la inscripción. Revisa tus elecciones e inténtalo de nuevo."; return; }
     entryEditing = false;
     await loadPrivateData(); render();
   });
