@@ -444,16 +444,16 @@ function renderAuthExperience() {
 }
 
 function renderSecureEntryForm(existing = null) {
-  const optionList = (teams) => [...teams].sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" })).map((team) => `<option value="${escapeAttr(team)}">${escapeHtml(team)}</option>`).join("");
+  const teamSelectOptions = (teams, selected, placeholder) => `<option value="" disabled ${selected ? "" : "selected"}>${escapeHtml(placeholder)}</option>${[...teams].sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" })).map((team) => `<option value="${escapeAttr(team)}" ${team === selected ? "selected" : ""}>${escapeHtml(team)}</option>`).join("")}`;
   const allTeams = BOMBOS.flat();
   const playerOptions = playerCatalog.map((player) => `<option value="${escapeAttr(`${player.full_name} — ${player.team_name}`)}"></option>`).join("");
   const catalogReady = playerCatalog.length > 0;
   const selectedPlayer = playerCatalog.find((player) => player.player_id === existing?.top_scorer_player_id);
   const scorerValue = selectedPlayer ? `${selectedPlayer.full_name} — ${selectedPlayer.team_name}` : "";
   return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p>Podrás modificar estas elecciones hasta el inicio del primer partido de J2.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con una inscripción ya confirmada. Tiene prioridad quien confirmó antes.</span></aside><form class="registration-form" data-secure-entry-form>
-    ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><input name="pot_${pot}_team" list="pot-${pot}-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.[`pot_${pot}_team`] || "")}"><datalist id="pot-${pot}-teams">${optionList(BOMBOS[pot - 1])}</datalist></label>`).join("")}
-    <label><span>Campeón</span><input name="champion_team" list="all-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.champion_team || "")}"></label>
-    <label><span>Subcampeón</span><input name="runner_up_team" list="all-teams" required placeholder="Busca un equipo" value="${escapeAttr(existing?.runner_up_team || "")}"></label><datalist id="all-teams">${optionList(allTeams)}</datalist>
+    ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><select name="pot_${pot}_team" required aria-label="Equipo del Bombo ${pot}">${teamSelectOptions(BOMBOS[pot - 1], existing?.[`pot_${pot}_team`] || "", "Selecciona un equipo")}</select></label>`).join("")}
+    <label><span>Campeón</span><select name="champion_team" required aria-label="Campeón">${teamSelectOptions(allTeams, existing?.champion_team || "", "Selecciona un equipo")}</select></label>
+    <label><span>Subcampeón</span><select name="runner_up_team" required aria-label="Subcampeón">${teamSelectOptions(allTeams, existing?.runner_up_team || "", "Selecciona un equipo")}</select></label>
     <label><span>Pichichi</span><input name="top_scorer" list="players" required ${catalogReady ? "" : "disabled"} placeholder="${catalogReady ? "Busca jugador o equipo" : "Pendiente de catálogo de jugadores"}" value="${escapeAttr(scorerValue)}"></label><datalist id="players">${playerOptions}</datalist>
     <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo de jugadores se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><div class="entry-actions">${existing ? "<button class=\"secondary\" type=\"button\" data-cancel-entry-edit>Cancelar</button>" : ""}<button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>${existing ? "Guardar cambios" : "Confirmar inscripción"}</button></div></form></section></div>`;
 }
