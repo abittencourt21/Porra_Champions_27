@@ -506,20 +506,20 @@ function renderPredictionRow(match, existing) {
   const closingNotice = predictionClosingNotice(match, editable);
   return `
     <div class="prediction-row">
-      <div class="prediction-teams">
-        ${closingNotice}
-        <strong>${escapeHtml(match.home_team)}</strong>
+      <div class="prediction-matchup">
+        <div class="prediction-team prediction-team-home">${teamLabel(match.home_team)}</div>
         <div class="prediction-scores">
           <label><span class="sr-only">Goles ${escapeHtml(match.home_team)}</span><input name="match-${match.matchid}-home" type="number" min="0" max="10" value="${home}" ${editable ? "" : "disabled"} /></label>
           <span class="prediction-separator" aria-hidden="true">–</span>
           <label><span class="sr-only">Goles ${escapeHtml(match.away_team)}</span><input name="match-${match.matchid}-away" type="number" min="0" max="10" value="${away}" ${editable ? "" : "disabled"} /></label>
         </div>
-        <strong>${escapeHtml(match.away_team)}</strong>
-        <div class="prediction-meta muted">${escapeHtml(match.fecha)} · ${escapeHtml(match.ronda)}</div>
-        ${officialResult}
+        <div class="prediction-team prediction-team-away">${teamLabel(match.away_team)}</div>
       </div>
-      <div class="prediction-status ${editable ? (existing ? "saved" : "pending") : "locked"}" title="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}" aria-label="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}">${editable ? (existing ? "✓" : "◷") : "🔒"}</div>
-      <div class="prediction-actions">${finished ? courtesy ? `<span class="prediction-points courtesy" title="Jornada de cortesía: este pronóstico no puntúa" aria-label="Jornada de cortesía: este pronóstico no puntúa">—</span>` : `<span class="prediction-points ${scoreKind}" title="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}" aria-label="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}: ${points} puntos">${points}p</span>` : editable ? `<button class="secondary icon-button" type="button" data-random-prediction="${escapeAttr(match.matchid)}" title="Generar marcador aleatorio" aria-label="Generar marcador aleatorio">🎲</button><button class="secondary icon-button" type="button" data-save-prediction="${escapeAttr(match.matchid)}" title="Guardar este partido" aria-label="Guardar este partido" disabled>💾</button>` : ""}</div>
+      <div class="prediction-footer">
+        <div class="prediction-info"><div class="prediction-meta muted">${escapeHtml(match.fecha)} · ${escapeHtml(match.ronda)}</div>${officialResult}${closingNotice}</div>
+        <div class="prediction-status ${editable ? (existing ? "saved" : "pending") : "locked"}" title="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}" aria-label="${editable ? (existing ? "Guardado" : "Pendiente de confirmar") : "Bloqueado"}">${editable ? (existing ? "✓" : "◷") : "🔒"}</div>
+        <div class="prediction-actions">${finished ? courtesy ? `<span class="prediction-points courtesy" title="Jornada de cortesía: este pronóstico no puntúa" aria-label="Jornada de cortesía: este pronóstico no puntúa">—</span>` : `<span class="prediction-points ${scoreKind}" title="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}" aria-label="${scoreKind === "exact" ? "Marcador exacto" : scoreKind === "outcome" ? "1X2 acertado" : "Sin acierto"}: ${points} puntos">${points}p</span>` : editable ? `<button class="secondary icon-button" type="button" data-random-prediction="${escapeAttr(match.matchid)}" title="Generar marcador aleatorio" aria-label="Generar marcador aleatorio">🎲</button><button class="secondary icon-button" type="button" data-save-prediction="${escapeAttr(match.matchid)}" title="Guardar este partido" aria-label="Guardar este partido" disabled>💾</button>` : ""}</div>
+      </div>
     </div>
   `;
 }
