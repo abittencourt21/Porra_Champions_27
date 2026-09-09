@@ -400,7 +400,7 @@ function renderSecureUserExperience() {
   if (!currentUser || authRecoveryMode) return renderAuthExperience();
   if (!ownProfile) return `
     <div class="user-shell"><section class="user-card"><p class="eyebrow">Perfil</p><h2>Elige tu alias</h2>
-    <form class="registration-form" data-secure-profile-form><label><span>Alias</span><input name="alias" required minlength="2" maxlength="32" placeholder="Tu nombre visible"></label><button class="primary" type="submit">Guardar perfil</button></form></section></div>`;
+    <p class="muted">Sesión activa: ${escapeHtml(currentUser.email || "")}</p><form class="registration-form" data-secure-profile-form><label><span>Alias</span><input name="alias" required minlength="2" maxlength="32" placeholder="Tu nombre visible"></label><div class="entry-actions"><button class="secondary" type="button" data-auth-sign-out>Salir</button><button class="primary" type="submit">Guardar perfil</button></div></form></section></div>`;
   if (!ownEntry || entryEditing) return renderSecureEntryForm(ownEntry);
   const matches = DATA.partidos.filter((match) => match.ronda === predictionRound);
   const courtesyRound = matches[0]?.ronda === "J01";
@@ -450,12 +450,12 @@ function renderSecureEntryForm(existing = null) {
   const catalogReady = playerCatalog.length > 0;
   const selectedPlayer = playerCatalog.find((player) => player.player_id === existing?.top_scorer_player_id);
   const scorerValue = selectedPlayer ? `${selectedPlayer.full_name} — ${selectedPlayer.team_name}` : "";
-  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p>Podrás modificar estas elecciones hasta el inicio del primer partido de J2.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con ninguna otra inscripción confirmada, también al modificar.</span></aside><form class="registration-form" data-secure-entry-form>
+  return `<div class="user-shell"><section class="user-card"><p class="eyebrow">${existing ? "Modificar inscripción" : "Inscripción inicial"}</p><h2>${existing ? "Actualiza tu porra" : "Define tu porra"}</h2><p class="muted">Sesión activa: ${escapeHtml(currentUser?.email || "")}</p><p>Podrás modificar estas elecciones hasta el inicio del primer partido de J2.</p><aside class="entry-rule" role="note"><strong>Regla de diversidad</strong><span>No pueden coincidir 3 o más equipos de bombos con ninguna otra inscripción confirmada, también al modificar.</span></aside><form class="registration-form" data-secure-entry-form>
     ${[1, 2, 3, 4].map((pot) => `<label><span>Equipo del Bombo ${pot}</span><select name="pot_${pot}_team" required aria-label="Equipo del Bombo ${pot}">${teamSelectOptions(BOMBOS[pot - 1], existing?.[`pot_${pot}_team`] || "", "Selecciona un equipo")}</select></label>`).join("")}
     <label><span>Campeón</span><select name="champion_team" required aria-label="Campeón">${teamSelectOptions(allTeams, existing?.champion_team || "", "Selecciona un equipo")}</select></label>
     <label><span>Subcampeón</span><select name="runner_up_team" required aria-label="Subcampeón">${teamSelectOptions(allTeams, existing?.runner_up_team || "", "Selecciona un equipo")}</select></label>
     <label><span>Pichichi</span><input name="top_scorer" list="players" required ${catalogReady ? "" : "disabled"} placeholder="${catalogReady ? "Busca jugador o equipo" : "Pendiente de catálogo de jugadores"}" value="${escapeAttr(scorerValue)}"></label><datalist id="players">${playerOptions}</datalist>
-    <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo de jugadores se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><div class="entry-actions">${existing ? "<button class=\"secondary\" type=\"button\" data-cancel-entry-edit>Cancelar</button>" : ""}<button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>${existing ? "Guardar cambios" : "Confirmar inscripción"}</button></div></form></section></div>`;
+    <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo de jugadores se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><div class="entry-actions"><button class="secondary" type="button" data-auth-sign-out>Salir</button>${existing ? "<button class=\"secondary\" type=\"button\" data-cancel-entry-edit>Cancelar</button>" : ""}<button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>${existing ? "Guardar cambios" : "Confirmar inscripción"}</button></div></form></section></div>`;
 }
 
 function renderUserRegistration() {
@@ -1443,9 +1443,11 @@ function bindEvents() {
   });
   document.querySelector("[data-edit-entry]")?.addEventListener("click", () => { entryEditing = true; render(); });
   document.querySelector("[data-cancel-entry-edit]")?.addEventListener("click", () => { entryEditing = false; render(); });
-  document.querySelector("[data-secure-sign-out]")?.addEventListener("click", async () => {
+  document.querySelectorAll("[data-auth-sign-out], [data-secure-sign-out]").forEach((button) => button.addEventListener("click", async () => {
+    entryEditing = false;
+    predictionDrafts = {};
     await supabaseClient.auth.signOut();
-  });
+  }));
   document.querySelector("[data-secure-prediction-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = {};
