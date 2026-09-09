@@ -78,6 +78,8 @@ class BuildDataSportsDbTests(unittest.TestCase):
             "Costa de Marfil": "Côte d’Ivoire",
             "RD Congo": "Congo DR",
             "Estados Unidos": "United States of America",
+            "Inter": "Inter Milan",
+            "Atlético de Madrid": "Atlético Madrid",
         }
 
         for spanish_name, sportsdb_name in cases.items():

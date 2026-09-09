@@ -208,7 +208,7 @@ async function boot() {
         supabaseClient.from("public_participants").select("alias, equipos, campeon, subcampeon, pichichi"),
         supabaseClient.from("quinielista_ranking").select("posicion, alias, puntos_quinielista, resultados_exactos, jornadas_ganadas"),
       ]);
-      DATA.participantes = (participants || []).map((row) => ({ ...row, puntos_total: 0, desglose: {} }));
+      DATA.participantes = scorePublishedParticipants(participants || []);
       quinielistaRows = quinielista || [];
     }
     openAliases = new Set();
@@ -1191,6 +1191,36 @@ function computeTeamScores() {
     });
   });
   return teams;
+}
+
+function scorePublishedParticipants(participants) {
+  const statsByTeam = new Map();
+  computeTeamScores().forEach((team) => {
+    statsByTeam.set(cleanTeam(team.team), team);
+    statsByTeam.set(looseTeamKey(team.team), team);
+  });
+  const scored = participants.map((participant) => {
+    const team_data = (participant.equipos || []).map((team) => {
+      const stats = statsByTeam.get(cleanTeam(team)) || statsByTeam.get(looseTeamKey(team));
+      return {
+        team,
+        bombo: getBombo(team),
+        g_pts: stats?.grupos || 0,
+        ko_pts: (stats?.ko_resultado || 0) + (stats?.ko_pase || 0),
+        rondas_pasadas: [],
+      };
+    });
+    const desglose = {
+      grupos: team_data.reduce((total, team) => total + team.g_pts, 0),
+      playoffs_resultado: team_data.reduce((total, team) => total + (statsByTeam.get(cleanTeam(team.team))?.ko_resultado || 0), 0),
+      playoffs_pase: team_data.reduce((total, team) => total + (statsByTeam.get(cleanTeam(team.team))?.ko_pase || 0), 0),
+      bonus_final: 0,
+    };
+    return { ...participant, team_data, desglose, puntos_total: Object.values(desglose).reduce((total, points) => total + points, 0) };
+  });
+  return scored
+    .sort((a, b) => b.puntos_total - a.puntos_total || String(a.alias).localeCompare(String(b.alias)))
+    .map((participant, index) => ({ ...participant, rank_actual: index + 1 }));
 }
 
 function selectionGroups() {

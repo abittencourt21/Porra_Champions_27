@@ -45,6 +45,8 @@ RANKING_CHECKPOINT_IDS = {checkpoint for checkpoint, _label in RANKING_CHECKPOIN
 KO_CHECKPOINT_ORDER = {"R32": 4, "R16": 5, "QF": 6, "SF": 7, "F": 8}
 
 _RAW_TEAM_ALIASES = {
+    "atletico madrid": "atletico de madrid",
+    "inter milan": "inter",
     "argentina": "argentina",
     "algeria": "argelia",
     "argelia": "argelia",
