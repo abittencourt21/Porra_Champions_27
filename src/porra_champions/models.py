@@ -102,7 +102,7 @@ class ParticipantPick:
 @dataclass
 class TournamentMeta:
     ultima_actualizacion: str
-    fuente: str = "TheSportsDB liga 4429"
+    fuente: str = "TheSportsDB liga 4480"
     estado_torneo: str = "pre"
     campeon: str = ""
     subcampeon: str = ""

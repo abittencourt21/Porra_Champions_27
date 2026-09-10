@@ -25,6 +25,8 @@ from .sportsdb import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
+SEASON_DATA_DIR = ROOT / "data" / "champions-2026-27"
+SEED_PATH = SEASON_DATA_DIR / "seed.json"
 DEFAULT_PREVIOUS_DATOS_URL = "https://abittencourt21.github.io/Porra_Champions_27/datos.json"
 try:
     LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
@@ -32,9 +34,7 @@ except ZoneInfoNotFoundError:
     LOCAL_TIMEZONE = datetime.now().astimezone().tzinfo or timezone.utc
 RANKING_CHECKPOINTS = (
     ("pre", "Pre"),
-    ("J1", "J1"),
-    ("J2", "J2"),
-    ("J3", "J3"),
+    *((f"J{matchday}", f"J{matchday}") for matchday in range(1, 9)),
     ("R32", "R32"),
     ("R16", "R16"),
     ("QF", "QF"),
@@ -252,7 +252,7 @@ def main() -> None:
     meta["ultima_actualizacion"] = datetime.now(timezone.utc).isoformat()
     meta["fecha_actualizacion_local"] = build_date
     if live_source_used:
-        meta["fuente"] = "TheSportsDB liga 4429"
+        meta["fuente"] = "TheSportsDB liga 4480"
 
     overrides = inputs.get("overrides", [])
     matches, meta, goleadores = _apply_overrides(
@@ -296,7 +296,7 @@ def _load_seed(path: Path) -> dict:
 
 
 def _load_inputs() -> dict:
-    seed = _load_seed(ROOT / "data" / "seed.json")
+    seed = _load_seed(SEED_PATH)
     public_tsv_url = os.getenv("GOOGLE_SHEET_TSV_URL")
     if public_tsv_url:
         return load_public_tsv_inputs(
@@ -396,11 +396,19 @@ def _load_matches(
 
 
 def _should_discover_knockouts(seed_matches: list[Match], target_date: str) -> bool:
-    group_matches = [match for match in seed_matches if match.ronda == "grupos"]
-    if not any(match.matchid == 72 for match in group_matches):
+    league_matches = [
+        match
+        for match in seed_matches
+        if re.fullmatch(r"J\d{2}", match.ronda) and match.roundnumber is not None
+    ]
+    if not league_matches or max(match.roundnumber for match in league_matches) < 8:
         return False
-    group_dates = [_normalize_date(match.fecha) for match in group_matches if match.fecha]
-    return bool(group_dates) and target_date > max(group_dates)
+    final_matchday_dates = [
+        _normalize_date(match.fecha)
+        for match in league_matches
+        if match.roundnumber == 8 and match.fecha
+    ]
+    return bool(final_matchday_dates) and target_date > max(final_matchday_dates)
 
 
 def _sportsdb_fetch_dates(target_date: str) -> list[str]:
@@ -766,13 +774,15 @@ def _ranking_checkpoint_id(payload: dict[str, Any], build_date: str) -> str:
     if ko_rounds:
         return max(ko_rounds, key=lambda round_name: KO_CHECKPOINT_ORDER[round_name])
 
-    group_rounds = [
+    league_rounds = [
         int(match.roundnumber)
         for match in completed
-        if match.ronda == "grupos" and match.roundnumber is not None
+        if (
+            match.ronda == "grupos" or re.fullmatch(r"J\d{2}", match.ronda)
+        ) and match.roundnumber is not None
     ]
-    if group_rounds:
-        return f"J{min(max(group_rounds), 3)}"
+    if league_rounds:
+        return f"J{min(max(league_rounds), 8)}"
     return "pre"
 
 

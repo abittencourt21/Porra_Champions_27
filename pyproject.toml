@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "porra-champions-league"
 version = "0.1.0"
@@ -7,6 +11,13 @@ dependencies = [
   "google-api-python-client>=2.0",
   "google-auth>=2.0",
 ]
+
+[project.urls]
+Homepage = "https://abittencourt21.github.io/Porra_Champions_27/"
+Repository = "https://github.com/abittencourt21/Porra_Champions_27"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

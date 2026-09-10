@@ -6,7 +6,7 @@
   - Configure the harness for this repository
   - Keep the workspace documentation and knowledge map usable for future work
 - context:
-  - Repository for a World Cup prediction pool
-  - Python project with tests and data generation scripts
+  - Repositorio de una porra de la UEFA Champions League 2026/27
+  - Proyecto Python con web estática, Supabase, tests y scripts de actualización de datos
 - constraints:
   - Prefer concise guidance and practical setup over verbose explanations

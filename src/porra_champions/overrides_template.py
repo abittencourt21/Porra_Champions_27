@@ -36,8 +36,8 @@ HEADERS = [
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Genera plantilla CSV para la pestana overrides.")
-    parser.add_argument("--seed", default="data/seed.json", help="Ruta del seed base.")
-    parser.add_argument("--out", default="data/overrides_template.csv", help="Ruta de salida CSV.")
+    parser.add_argument("--seed", default="data/champions-2026-27/seed.json", help="Ruta del seed base.")
+    parser.add_argument("--out", default="data/examples/overrides.csv", help="Ruta de salida CSV.")
     args = parser.parse_args()
 
     seed = json.loads((ROOT / args.seed).read_text(encoding="utf-8"))

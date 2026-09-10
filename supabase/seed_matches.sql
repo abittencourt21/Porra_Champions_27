@@ -1,4 +1,4 @@
--- Generated from data/seed.json. Do not edit manually.
+-- Generated from data/champions-2026-27/seed.json. Do not edit manually.
 insert into public.matches (match_id, round_code, starts_at, home_team, away_team, status, home_score, away_score)
 values
   ('2594556', 'J01', '2026-09-08T21:00:00+02:00', 'Lille', 'Real Betis', 'NS', null, null),

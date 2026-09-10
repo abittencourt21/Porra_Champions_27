@@ -1,90 +1,74 @@
-# Porra Champions League
+# Porra Champions League 2026/27
 
-Aplicación estática con Supabase para la porra de la UEFA Champions League
-2026/27: inscripción privada, pronósticos por partido y clasificación pública.
+[![CI](https://github.com/abittencourt21/Porra_Champions_27/actions/workflows/ci.yml/badge.svg)](https://github.com/abittencourt21/Porra_Champions_27/actions/workflows/ci.yml)
+[![Pages](https://github.com/abittencourt21/Porra_Champions_27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/abittencourt21/Porra_Champions_27/actions/workflows/deploy-pages.yml)
 
-## Datos y trazabilidad
+Aplicación web estática para gestionar una porra privada de la UEFA Champions League 2026/27. Usa Supabase para autenticación y datos de participantes, y GitHub Pages para publicar la interfaz.
 
-`data/seed.json` contiene el calendario base de la fase liga. `public/datos.json`
-es la versión publicada y las fases posteriores se incorporan solo cuando están
-confirmadas oficialmente.
+[Abrir la aplicacion](https://abittencourt21.github.io/Porra_Champions_27/) · [Ver reglas](REGLAS_PARTICIPANTES.md) · [Estado del despliegue](https://github.com/abittencourt21/Porra_Champions_27/actions/workflows/deploy-pages.yml)
 
-- Fuente primaria: resultados y calendario publicados por UEFA.
-- Bombos: anuncio oficial de UEFA para la fase liga 2026/27.
-- Contraste secundario: TheSportsDB, liga 4480.
-- Escudos locales: selección de SVG de `JoseArroyave/football-logos` (MIT),
-  limitada a los clubes participantes.
+## Funcionalidades
 
-Las URLs exactas y el momento de captura quedan en `meta` y en cada
-`partido.source_url`. El tier gratuito de TheSportsDB no ofrece cobertura
-completa de esta temporada, por lo que no sustituye a UEFA como fuente primaria.
+- Inscripción segura con Google o email y contraseña.
+- Selección de un club por bombo, campeón, subcampeón y pichichi.
+- Pronósticos guardados por partido o de forma masiva.
+- Clasificación general y Premio Quinielista con desglose auditable.
+- Actualización automática de partidos mediante TheSportsDB.
+- Protección de datos mediante Row Level Security (RLS) de Supabase.
 
-## Reglas
+## Requisitos
 
-Las reglas completas se muestran en la pestaña **Reglas** de la aplicación.
+- Python 3.12 o posterior.
+- Node.js 24 para las pruebas JavaScript y los workflows.
+- Un servidor HTTP local; Python incluye uno.
+- Un proyecto Supabase para probar autenticación y escritura de datos.
 
-Las fechas de inscripción, pago y formulario de una nueva edición se decidirán
-antes de abrirla; no se infieren de los datos históricos.
+## Inicio rápido
 
-## Ejecutar y validar
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -e .
+$env:PYTHONPATH = "src"
+$env:PREVIOUS_DATOS_URL = ""
+$env:BUILD_DATE = "2026-09-07"
+.venv\Scripts\python -m porra_champions.build_data --out public/datos.json
+Copy-Item public/supabase-config.js.example public/supabase-config.js
+.venv\Scripts\python -m http.server 8000 --directory public
+```
 
-En Windows, si `python` apunta al alias de Microsoft Store, usa la instalación
-real de Python 3.12:
+Abre `http://localhost:8000`. La navegación pública funciona con la configuración de ejemplo; para probar altas y pronósticos, completa `public/supabase-config.js` con la URL y la clave publishable de un proyecto de desarrollo.
+
+## Validación
 
 ```powershell
 $env:PYTHONPATH = "src"
-$py = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
-& $py -m unittest discover -s tests
-& $py -m porra_champions.build_data --out public/datos.json
+python -m unittest discover -s tests
+node --test --test-isolation=none tests/auth.test.cjs
 ```
 
-Después sirve `public/` con cualquier servidor estático y abre `index.html`.
-
-## Datos y Supabase
-
-La semilla y el manifiesto dejan trazabilidad de las fuentes UEFA. Para preparar
-la tabla de partidos de Supabase:
-
-```powershell
-$env:PYTHONPATH = "src"
-& $py -m porra_champions.build_supabase_seed
-```
-
-Consulta [`supabase/README.md`](supabase/README.md) para migraciones, RLS y la
-sincronización administrativa.
-
-## Acceso de participantes
-
-La web usa Supabase Auth con Google y email/contraseña. Brevo se
-utiliza solo para confirmar nuevas cuentas y recuperar una contraseña. En
-**Supabase > Authentication > Providers**, habilita Email (contraseña) y Google.
-En **URL Configuration**, añade como Site URL y Redirect URL:
-`https://abittencourt21.github.io/Porra_Champions_27/`.
-
-En Google Cloud registra exactamente el callback que muestra Supabase y guarda
-el Client Secret solo allí. Antes de abrir la porra, prueba
-una cuenta que hubiera entrado por Magic Link: debe conservar alias,
-inscripción y pronósticos; no enlaces manualmente dos cuentas distintas.
-
-## Publicar en GitHub Pages
-
-En el repositorio, activa **Settings > Pages > Source: GitHub Actions** y añade
-estos secretos en **Settings > Secrets and variables > Actions**:
-
-- `SUPABASE_URL`: Project URL de Supabase.
-- `SUPABASE_PUBLISHABLE_KEY`: clave publishable (anon) del proyecto.
-- `SUPABASE_SERVICE_ROLE_KEY`: clave `service_role`, solo para la sincronización
-  administrativa de partidos. Nunca se envía al navegador.
-
-El flujo `Build and deploy Pages` crea en cada despliegue el archivo público de
-configuración con los dos primeros secretos. Tras guardarlos, ejecútalo desde
-**Actions > Build and deploy Pages > Run workflow**.
+Resultado esperado: todas las pruebas terminan con estado correcto y el generador produce `public/datos.json`.
 
 ## Estructura
 
-- `data/champions-2026-27/`: datos de temporada importados y trazables.
-- `public/`: GitHub Pages y `datos.json` generado.
-- `src/porra_champions/`: importación, puntuación y generador.
-- `tests/`: validaciones del calendario, bombos y reglas.
-- `docs/archive/`: recursos históricos del Mundial, aislados del producto.
-- `02-DOCS/wiki/sdd/`: especificación, plan y progreso del cambio.
+| Ruta | Responsabilidad |
+| --- | --- |
+| `public/` | Aplicación estática desplegada en GitHub Pages. |
+| `src/porra_champions/` | Importación, normalización, puntuación y sincronización. |
+| `data/champions-2026-27/` | Semilla canónica, jugadores y procedencia de la temporada. |
+| `supabase/migrations/` | Esquema, funciones y políticas RLS versionadas. |
+| `tests/` | Pruebas de dominio, fuentes, seguridad e higiene del repositorio. |
+| `docs/` | Documentación pública de arquitectura, despliegue y datos. |
+| `02-DOCS/` | Memoria del arnés SDD; no forma parte del sitio publicado. |
+
+## Documentación
+
+- [Arquitectura](docs/architecture.md)
+- [Despliegue y operacion](docs/deployment.md)
+- [Procedencia de los datos](docs/data-provenance.md)
+- [Configuración de Supabase](supabase/README.md)
+- [Política de seguridad](SECURITY.md)
+- [Cómo contribuir](CONTRIBUTING.md)
+
+## Estado y licencia
+
+El proyecto está operativo para la temporada 2026/27. El código no tiene todavía una licencia de reutilización; que el repositorio sea público no concede permiso para copiarlo o redistribuirlo. Consulta [avisos de terceros](THIRD_PARTY_NOTICES.md) antes de reutilizar sus activos.

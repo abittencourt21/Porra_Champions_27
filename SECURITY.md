@@ -1,27 +1,29 @@
-# Seguridad y privacidad
+# Seguridad
 
-Este repositorio esta pensado para poder ser publico y desplegarse gratis con
-GitHub Pages, siempre que los datos sensibles se mantengan fuera del codigo.
+## Informar de una vulnerabilidad
 
-## No subir nunca
+No publiques credenciales, datos personales ni detalles explotables en una incidencia publica. Contacta de forma privada con el propietario del repositorio y describe el impacto, los pasos de reproduccion y la version afectada.
+
+## Datos que nunca se versionan
 
 - Emails, nombres reales, telefonos o datos de pago de participantes.
-- Tokens de Google, claves de service account, ficheros `credentials*.json`,
-  `token*.json`, `*.pem` o `*.key`.
-- Exportaciones completas del Google Sheet.
-- `public/datos.json` con datos reales si contiene algo mas que informacion
-  publica de la clasificacion.
+- Claves `service_role`, secretos SMTP u OAuth y tokens de acceso.
+- Archivos `.env`, credenciales de Google, claves privadas o exportaciones de Supabase.
+- Exportaciones completas de participantes o pronosticos que aun no hayan cerrado.
 
-## Datos permitidos en la web publica
+La clave publishable de Supabase puede estar en el navegador: la proteccion depende de las politicas Row Level Security, no de ocultar esa clave. La clave `service_role` solo se usa en el job administrativo de GitHub Actions.
 
-- Alias publico.
-- Equipos elegidos.
-- Puntos, desglose y predicciones visibles de la porra.
-- Partidos, resultados y goleadores.
+## Datos publicos previstos
 
-## Flujo recomendado
+- Alias del participante y equipos elegidos.
+- Puntuacion y desglose de la clasificacion.
+- Pronosticos confirmados despues de su cierre.
+- Partidos, resultados, bombos y catalogo de jugadores.
 
-GitHub Actions debe leer las fuentes privadas mediante secrets del repositorio,
-generar `public/datos.json` durante el workflow y desplegarlo como artefacto de
-GitHub Pages. El workflow no debe commitear datos generados a `main`.
+## Controles del repositorio
+
+- `public/datos.json` y `public/supabase-config.js` se generan y no se versionan.
+- Las migraciones de `supabase/migrations/` mantienen las politicas RLS junto al codigo.
+- CI valida que no se publiquen rutas locales, datos heredados ni configuraciones con secretos.
+- Si una credencial llega a Git, revocala primero y limpia despues el historial; borrar solo el archivo no invalida la clave.
 

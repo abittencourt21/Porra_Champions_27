@@ -8,124 +8,12 @@ const TABS = [
   ["elim", "Eliminatorias"],
 ];
 
-let BOMBOS = [
-  ["Estados Unidos", "Croacia", "Noruega", "Jordania"],
-  ["Canada", "Marruecos", "Panama", "Cabo Verde"],
-  ["Mexico", "Colombia", "Egipto", "Ghana"],
-  ["España", "Uruguay", "Argelia", "Curazao"],
-  ["Argentina", "Suiza", "Escocia", "Haiti"],
-  ["Francia", "Japon", "Paraguay", "Nueva Zelanda"],
-  ["Inglaterra", "Senegal", "Tunez", "Bosnia y Herzegovina*"],
-  ["Brasil", "Iran", "Costa de Marfil", "Chequia*"],
-  ["Portugal", "Corea del Sur", "Uzbekistan", "Turquia*"],
-  ["Paises Bajos", "Ecuador", "Catar", "Suecia*"],
-  ["Belgica", "Austria", "Arabia Saudi", "RD Congo**"],
-  ["Alemania", "Australia", "Sudafrica", "Irak**"],
-];
-
-let BOMBO_MAP = Object.fromEntries(
-  BOMBOS.flatMap((row) => row.map((team, index) => [cleanTeam(team), index + 1]))
-);
-Object.assign(BOMBO_MAP, {
-  "Canadá": 1,
-  "México": 1,
-  "Países Bajos": 1,
-  "Bélgica": 1,
-  "Japón": 2,
-  "Irán": 2,
-  "Panamá": 3,
-  "Túnez": 3,
-  "Uzbekistán": 3,
-  "Arabia Saudí": 3,
-  "Sudáfrica": 3,
-  "Haití": 4,
-  "Turquía": 4,
-  "Turquía*": 4,
-});
-let CANONICAL_TEAMS = BOMBOS.flatMap((row) =>
-  row.map((team, index) => ({ team, bombo: index + 1 }))
-);
+// El catálogo real se carga desde datos.json durante boot(). Mantener el estado
+// inicial vacío evita que datos heredados aparezcan si la carga falla.
+let BOMBOS = [[], [], [], []];
+let BOMBO_MAP = {};
+let CANONICAL_TEAMS = [];
 const BOMBO_COL = ["#0057d8", "#00a66a", "#e1253b", "#b88923"];
-const FLAGS = {
-  "Alemania": "de",
-  "Arabia Saudí": "sa",
-  "Arabia Saudi": "sa",
-  "Argelia": "dz",
-  "Argentina": "ar",
-  "Australia": "au",
-  "Austria": "at",
-  "Bélgica": "be",
-  "Belgica": "be",
-  "Bosnia y Herzegovina": "ba",
-  "Brasil": "br",
-  "Cabo Verde": "cv",
-  "Canadá": "ca",
-  "Canada": "ca",
-  "Catar": "qa",
-  "Chequia": "cz",
-  "Colombia": "co",
-  "Corea del Sur": "kr",
-  "Costa de Marfil": "ci",
-  "Croacia": "hr",
-  "Curazao": "cw",
-  "Ecuador": "ec",
-  "Egipto": "eg",
-  "Escocia": "gb-sct",
-  "España": "es",
-  "Espana": "es",
-  "Estados Unidos": "us",
-  "Francia": "fr",
-  "Ghana": "gh",
-  "Haití": "ht",
-  "Haiti": "ht",
-  "Inglaterra": "gb-eng",
-  "Irak": "iq",
-  "Irán": "ir",
-  "Iran": "ir",
-  "Japón": "jp",
-  "Japon": "jp",
-  "Jordania": "jo",
-  "Marruecos": "ma",
-  "México": "mx",
-  "Mexico": "mx",
-  "Noruega": "no",
-  "Nueva Zelanda": "nz",
-  "Países Bajos": "nl",
-  "Paises Bajos": "nl",
-  "Panamá": "pa",
-  "Panama": "pa",
-  "Paraguay": "py",
-  "Portugal": "pt",
-  "RD Congo": "cd",
-  "Senegal": "sn",
-  "Sudáfrica": "za",
-  "Sudafrica": "za",
-  "Suecia": "se",
-  "Suiza": "ch",
-  "Túnez": "tn",
-  "Tunez": "tn",
-  "Turquía": "tr",
-  "Turquia": "tr",
-  "Uruguay": "uy",
-  "Uzbekistán": "uz",
-  "Uzbekistan": "uz",
-};
-const DISPLAY_NAMES = {
-  "belgica": "Bélgica",
-  "canada": "Canadá",
-  "espana": "España",
-  "haiti": "Haití",
-  "iran": "Irán",
-  "japon": "Japón",
-  "mexico": "México",
-  "paises bajos": "Países Bajos",
-  "panama": "Panamá",
-  "sudafrica": "Sudáfrica",
-  "tunez": "Túnez",
-  "turquia": "Turquía",
-  "uzbekistan": "Uzbekistán",
-  "arabia saudi": "Arabia Saudí",
-};
 const ROUND_LABEL = {
   grupos: "Fase liga",
   R32: "Play-offs",
@@ -152,7 +40,6 @@ let ownProfile = null;
 let ownEntry = null;
 let ownPredictions = {};
 let supabaseClient = null;
-let localProfiles = [];
 let openAliases = new Set();
 let rankingSearch = "";
 let rankingSort = "rank";
@@ -364,48 +251,6 @@ function renderChrome() {
 function renderUserExperience() {
   if (supabaseClient) return renderSecureUserExperience();
   return `<div class="empty">El acceso seguro está pendiente de configurar por la organización.</div>`;
-  /* Legacy local demo retained below only until the next cleanup pass. */
-  const user = localUser || loadStoredUser();
-  if (!user) {
-    return renderUserRegistration();
-  }
-  const jornadaMatches = getDemoJornadaMatches();
-  const ownPredictions = getOwnPredictions(user.email);
-  return `
-    <div class="user-shell">
-      <section class="user-card">
-        <div>
-          <p class="eyebrow">Usuario activo</p>
-          <h2>${escapeHtml(user.alias || user.email)}</h2>
-          <p>${escapeHtml(user.email)}</p>
-        </div>
-        <button class="secondary" data-user-reset>Salir</button>
-      </section>
-      <section class="user-card user-card-alt">
-        <div class="stack" style="gap: 8px;">
-          <p class="eyebrow">Tu flujo de prueba</p>
-          <h3>Inscripción inicial</h3>
-          <p>Este prototipo simula el registro único por email y te permite volver a entrar sin crear un segundo perfil.</p>
-        </div>
-        <div class="pill-row">
-          <span class="pill">Identidad estable</span>
-          <span class="pill">Pronósticos por jornada</span>
-          <span class="pill">Edición hasta inicio</span>
-        </div>
-      </section>
-      <section class="user-card">
-        <div class="stack" style="gap: 8px;">
-          <p class="eyebrow">Jornada de prueba</p>
-          <h3>Jornada 1 · Lunes a martes</h3>
-          <p>Los partidos se muestran como si estuvieran abiertos para predicción. Puedes modificar los resultados hasta que empiece el partido.</p>
-        </div>
-        <form class="prediction-form" data-prediction-form>
-          ${jornadaMatches.map((match) => renderPredictionRow(match, ownPredictions[match.matchid])).join("")}
-          <button class="primary" type="submit">Guardar pronósticos</button>
-        </form>
-      </section>
-    </div>
-  `;
 }
 
 function renderSecureUserExperience() {
@@ -470,37 +315,6 @@ function renderSecureEntryForm(existing = null) {
     <p class="auth-feedback" data-entry-feedback ${catalogReady ? "hidden" : ""}>El catálogo de jugadores se está preparando; podrás confirmar la inscripción cuando esté cargado.</p><div class="entry-actions"><button class="secondary" type="button" data-auth-sign-out>Salir</button>${existing ? "<button class=\"secondary\" type=\"button\" data-cancel-entry-edit>Cancelar</button>" : ""}<button class="primary" type="submit" ${catalogReady ? "" : "disabled"}>${existing ? "Guardar cambios" : "Confirmar inscripción"}</button></div></form></section></div>`;
 }
 
-function renderUserRegistration() {
-  return `
-    <div class="user-shell">
-      <section class="user-card">
-        <p class="eyebrow">Prueba de usuario</p>
-        <h2>Inscripción inicial</h2>
-        <p>Introduce un email y un alias para simular el registro único. Después podrás volver a entrar y ver tus pronósticos.</p>
-        <form class="registration-form" data-registration-form>
-          <label>
-            <span>Alias</span>
-            <input name="alias" required placeholder="Tu nombre visible" />
-          </label>
-          <label>
-            <span>Email</span>
-            <input name="email" type="email" required placeholder="usuario@example.com" />
-          </label>
-          <button class="primary" type="submit">Crear mi perfil</button>
-        </form>
-      </section>
-      <section class="user-card user-card-alt">
-        <p class="eyebrow">Qué verás</p>
-        <ul class="check-list">
-          <li>Un perfil único por email</li>
-          <li>Una vista de pronósticos por jornada</li>
-          <li>Un estado claro de edición disponible</li>
-        </ul>
-      </section>
-    </div>
-  `;
-}
-
 function renderPredictionRow(match, existing) {
   const editable = isPredictionOpen(match);
   const draft = predictionDrafts[String(match.matchid)] || {};
@@ -534,40 +348,6 @@ function renderPredictionRow(match, existing) {
       </div>
     </div>
   `;
-}
-
-function loadStoredUser() {
-  try {
-    const saved = localStorage.getItem("porra-demo-user");
-    if (!saved) return null;
-    const parsed = JSON.parse(saved);
-    localUser = parsed;
-    return parsed;
-  } catch (error) {
-    return null;
-  }
-}
-
-function getOwnPredictions(email) {
-  if (!email) return {};
-  if (localPredictions[email]) return localPredictions[email];
-  try {
-    const saved = localStorage.getItem(`porra-demo-predictions-${email}`);
-    if (!saved) return {};
-    const parsed = JSON.parse(saved);
-    localPredictions[email] = parsed;
-    return parsed;
-  } catch (error) {
-    return {};
-  }
-}
-
-function getDemoJornadaMatches() {
-  return [
-    { matchid: 1, fecha: "Lun 08.06", ronda: "R01", home_team: "Real Madrid", away_team: "Inter" },
-    { matchid: 2, fecha: "Mar 09.06", ronda: "R01", home_team: "Bayern", away_team: "PSG" },
-    { matchid: 3, fecha: "Mar 09.06", ronda: "R01", home_team: "Liverpool", away_team: "Leverkusen" },
-  ];
 }
 
 function renderRanking() {
@@ -1037,151 +817,6 @@ function renderRules() {
     </div>`;
 }
 
-function renderRulesLegacy() {
-  return `
-    <div class="rules">
-      <section class="rules-hero">
-        <div>
-          <h2>Reglas de la porra</h2>
-          <p>Elige un club de cada bombo, campeón, subcampeón y pichichi; después confirma tus pronósticos partido a partido durante la Champions 2026/27.</p>
-          <p>Cada pronóstico queda bloqueado una hora antes de comenzar el partido.</p>
-        </div>
-        <div class="rules-kpi">
-          <div><strong>5&euro;</strong><span>Cuota de participación</span></div>
-          <div><strong>4</strong><span>Clubes por persona</span></div>
-          <div><strong>80/20</strong><span>Reparto del bote</span></div>
-          <div><strong>8</strong><span>Jornadas de fase liga</span></div>
-        </div>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Inscripción</h2>
-        <p>Cada participación debe incluir los datos necesarios para identificar la quiniela y calcular los puntos durante la competición.</p>
-        <div class="points-grid">
-          <div class="point-card"><strong>Identidad</strong><span>Nombre real, alias público y email de contacto.</span></div>
-          <div class="point-card"><strong>Equipos</strong><span>Un equipo del Bombo 1, 2, 3 y 4.</span></div>
-          <div class="point-card"><strong>Finales</strong><span>Campeón, subcampeón y pichichi o Bota de Oro.</span></div>
-        </div>
-        <p style="margin-top:12px">El cierre de registro se anunciará para cada edición antes de su inicio.</p>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Cuota y premios</h2>
-        <ul>
-          <li>Cuota de participación: <strong>5 euros</strong>.</li>
-          <li>La fecha límite de pago se comunicará junto con la convocatoria.</li>
-          <li>Si no se paga a tiempo, la quiniela queda anulada.</li>
-          <li>El bote se reparte: 80% para el primero y 20% para el segundo.</li>
-        </ul>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Bombos</h2>
-        <p>Cada participante debe elegir un club de cada bombo. Puedes consultar el listado completo en la pestaña <strong>Bombos</strong>.</p>
-        <table class="rules-table">
-          <thead><tr><th>Bombo</th><th>Elección</th></tr></thead>
-          <tbody>
-            <tr><td>Bombo 1</td><td>1 club</td></tr>
-            <tr><td>Bombo 2</td><td>1 club</td></tr>
-            <tr><td>Bombo 3</td><td>1 club</td></tr>
-            <tr><td>Bombo 4</td><td>1 club</td></tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Restricción de equipos</h2>
-        <p>Para que las quinielas sean variadas, dos participantes no pueden coincidir en 3 o más de sus 4 equipos.</p>
-        <ul>
-          <li>Si dos quinielas coinciden en 3 o 4 equipos, tiene prioridad la enviada primero.</li>
-          <li>La segunda persona tendrá que rehacer su combinación.</li>
-        </ul>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Puntos por partido</h2>
-        <p>Solo puntúan los pronósticos confirmados antes del cierre. Se compara el marcador a los 90 minutos: la prórroga y los penaltis no lo modifican.</p>
-        <table class="rules-table">
-          <thead><tr><th>Fase</th><th>Marcador exacto</th><th>1X2</th></tr></thead>
-          <tbody>
-            <tr><td>Fase liga</td><td>3 puntos</td><td>1 punto</td></tr>
-            <tr><td>Play-off</td><td>4 puntos</td><td>1 punto</td></tr>
-            <tr><td>Octavos</td><td>6 puntos</td><td>2 puntos</td></tr>
-            <tr><td>Cuartos</td><td>8 puntos</td><td>3 puntos</td></tr>
-            <tr><td>Semifinal</td><td>10 puntos</td><td>4 puntos</td></tr>
-            <tr><td>Final</td><td>12 puntos</td><td>5 puntos</td></tr>
-          </tbody>
-        </table>
-        <p style="margin-top:12px">El 1X2 acierta si coincide victoria local, empate o victoria visitante. Si el pronóstico no se confirma o falla, suma 0 puntos.</p>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Rondas con bonus</h2>
-        <ul>
-          <li>Octavos de final.</li>
-          <li>Cuartos de final.</li>
-          <li>Semifinal.</li>
-          <li>Final.</li>
-        </ul>
-        <p>El bonus se concede por cada ronda eliminatoria que el club supera.</p>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Bonus por alcanzar ronda</h2>
-        <table class="rules-table">
-          <thead><tr><th>Bombo original</th><th>Extra por ronda</th></tr></thead>
-          <tbody>
-            <tr><td>Bombo 1</td><td>+1 punto</td></tr>
-            <tr><td>Bombo 2</td><td>+2 puntos</td></tr>
-            <tr><td>Bombo 3</td><td>+3 puntos</td></tr>
-            <tr><td>Bombo 4</td><td>+4 puntos</td></tr>
-          </tbody>
-        </table>
-        <p>Ejemplo: un equipo del Bombo 4 que gana la Champions puede sumar hasta 20 puntos extra solo por rondas superadas.</p>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Bonus finales</h2>
-        <table class="rules-table">
-          <thead><tr><th>Acierto</th><th>Puntos</th></tr></thead>
-          <tbody>
-            <tr><td>Campeón acertado</td><td>+10</td></tr>
-            <tr><td>Subcampeón acertado</td><td>+5</td></tr>
-            <tr><td>Pichichi acertado</td><td>+7</td></tr>
-            <tr><td>Campeón real entre tus 4 equipos</td><td>+6</td></tr>
-          </tbody>
-        </table>
-        <p>El bonus de campeón acertado y el bonus de campeón entre tus 4 equipos no se acumulan entre sí.</p>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Pichichi</h2>
-        <p>El desempate de máximo goleador se aplicará según la estadística oficial UEFA que se publique para cada edición.</p>
-        <ul>
-          <li>Primero se comparan goles.</li>
-          <li>Si hay empate, se comparan asistencias.</li>
-          <li>Si sigue el empate, gana quien haya jugado menos minutos.</li>
-        </ul>
-      </section>
-
-      <section class="rules-block rules-half">
-        <h2>Desempates</h2>
-        <p>Si dos participantes terminan empatados a puntos, se aplicarán los criterios anunciados por la organización antes de la apertura. No se trasladan automáticamente los desempates de clasificación UEFA a la porra.</p>
-      </section>
-
-      <section class="rules-block rules-full">
-        <h2>Resumen rápido</h2>
-        <div class="points-grid four">
-          <div class="point-card"><strong>1</strong><span>Resultados de tus clubes en las ocho jornadas de fase liga.</span></div>
-          <div class="point-card"><strong>2</strong><span>Resultados de tus clubes en eliminatorias a 90 minutos.</span></div>
-          <div class="point-card"><strong>3</strong><span>Bonus por cada ronda que superen tus clubes.</span></div>
-          <div class="point-card"><strong>4</strong><span>Bonus finales por campeón, subcampeón y pichichi.</span></div>
-        </div>
-      </section>
-    </div>
-  `;
-}
-
 function computeTeamScores() {
   const teamGroups = teamGroupMap();
   const publishedTeams = Object.entries(DATA.bombos || {}).map(([team, bombo]) => ({ team, bombo: Number(bombo) }));
@@ -1503,42 +1138,6 @@ function bindEvents() {
     });
   });
 
-  document.querySelector("[data-registration-form]")?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const alias = form.alias.value.trim();
-    const email = form.email.value.trim().toLowerCase();
-    if (!alias || !email) return;
-    const profile = { alias, email, user_id: `user::${email}` };
-    localStorage.setItem("porra-demo-user", JSON.stringify(profile));
-    localUser = profile;
-    render();
-  });
-
-  document.querySelector("[data-user-reset]")?.addEventListener("click", () => {
-    localStorage.removeItem("porra-demo-user");
-    localUser = null;
-    render();
-  });
-
-  document.querySelector("[data-prediction-form]")?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const user = localUser || loadStoredUser();
-    if (!user) return;
-    const predictions = {};
-    Array.from(form.elements).forEach((element) => {
-      if (!element.name || !element.name.startsWith("match-")) return;
-      const matchId = Number(element.name.split("-")[1]);
-      const field = element.name.split("-")[2];
-      if (!predictions[matchId]) predictions[matchId] = {};
-      predictions[matchId][field === "home" ? "home_score" : "away_score"] = element.value === "" ? null : Number(element.value);
-    });
-    Object.values(predictions).forEach((prediction) => { prediction.confirmed_at = new Date().toISOString(); });
-    localStorage.setItem(`porra-demo-predictions-${user.email}`, JSON.stringify(predictions));
-    localPredictions[user.email] = predictions;
-    render();
-  });
   document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
     button.addEventListener("click", () => {
       const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -1792,12 +1391,9 @@ function looseTeamKey(team) {
 function teamLabel(team, showCompetitionStatus = false) {
   const cleaned = cleanTeam(team);
   const display = displayTeamName(cleaned);
-  const code = FLAGS[cleaned] || FLAGS[display] || FLAGS[String(team || "")];
   const suffix = String(team || "").includes("**") ? "**" : String(team || "").includes("*") ? "*" : "";
   const badge = DATA?.meta?.team_badges?.[cleaned] || `assets/clubs/${clubBadgeSlug(cleaned)}.svg`;
-  const flag = badge
-    ? `<img class="flag" src="${escapeAttr(badge)}" alt="" onerror="this.remove()">`
-    : code ? `<img class="flag" src="https://flagcdn.com/w40/${code}.png" alt="">` : "";
+  const flag = `<img class="flag" src="${escapeAttr(badge)}" alt="" onerror="this.remove()">`;
   const competitionStatus = showCompetitionStatus ? teamCompetitionStatus(team) : "";
   const statusIcon = competitionStatus === "alive"
     ? `<span class="competition-status alive" role="img" aria-label="Sigue en competición">✓</span>`
@@ -1838,8 +1434,7 @@ function teamCompetitionStatus(team) {
 }
 
 function displayTeamName(team) {
-  const key = looseTeamKey(team);
-  return DISPLAY_NAMES[key] || team;
+  return team;
 }
 
 function scoreValue(value) {

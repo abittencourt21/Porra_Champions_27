@@ -1,63 +1,70 @@
-# Reglas de la Porra Champions League
+# Reglas de la Porra Champions League 2026/27
 
-La interfaz se publica para la UEFA Champions League 2026/27. El calendario,
-las inscripciones y las reglas de esta edición se muestran en la aplicación.
+La aplicacion muestra estas mismas reglas en la pestana **Reglas**. Si hubiera una diferencia, la organizacion debe corregir ambas fuentes antes de aplicar una puntuacion.
 
-## Inscripción y bombos
+## 1. Inscripcion
 
-Cada participación debe incluir alias público, email de contacto y cuatro
-clubes: uno de cada bombo oficial UEFA. La elección de campeón, subcampeón y
-máximo goleador puede recogerse cuando la organización confirme que se usará
-en la siguiente edición.
+- Cada participante elige un club de cada uno de los cuatro bombos oficiales.
+- Tambien elige campeon, subcampeon y pichichi.
+- Dos participantes no pueden coincidir en tres o cuatro equipos de sus bombos. La primera inscripcion confirmada conserva la prioridad, tambien frente a modificaciones posteriores.
+- Excepcionalmente, la inscripcion y sus modificaciones se cierran al comenzar la jornada 2.
+- La cuota es de 5 EUR por participante.
 
-Para mantener variedad, dos quinielas no pueden coincidir en tres o cuatro de
-sus clubes. En caso de conflicto prevalece la enviada primero.
+## 2. Pronosticos
 
-## Puntuación
+- Cada marcador puede guardarse por separado o junto con otros partidos rellenados.
+- El plazo termina una hora antes del inicio oficial del partido, calculado con el horario de Madrid.
+- Un pronostico que no se confirme antes del cierre suma 0 puntos.
+- La jornada 1 (J1) es de cortesia solo para la quiniela: sus pronosticos no suman puntos ni cuentan para el Premio Quinielista.
+- Los puntos obtenidos desde la jornada 1 por los cuatro clubes elegidos si cuentan en la clasificacion general.
 
-### Fase liga
+## 3. Reparto de premios
 
-Cada club juega ocho jornadas. Por cada partido de uno de tus cuatro clubes:
+| Premio | Porcentaje del bote |
+| --- | ---: |
+| 1.º de la clasificacion general | 60% |
+| 2.º de la clasificacion general | 20% |
+| Ganador del Premio Quinielista | 20% |
 
-- Victoria: 3 puntos.
-- Empate: 1 punto.
-- Derrota: 0 puntos.
+El Premio Quinielista es acumulable con un premio de la clasificacion general.
 
-### Eliminatorias
+## 4. Puntuacion general
 
-Se aplican los mismos 3/1/0, pero solo con el marcador al final de los 90
-minutos. Prórroga y penaltis no alteran los puntos de resultado.
+Los cuatro equipos elegidos suman 3 puntos por victoria, 1 por empate y 0 por derrota.
 
-Además, cada ronda eliminatoria superada añade un bonus según el bombo original:
+| Bombo original | Bonus por clasificacion o ronda |
+| --- | ---: |
+| Bombo 1 | +1 |
+| Bombo 2 | +2 |
+| Bombo 3 | +3 |
+| Bombo 4 | +4 |
 
-| Bombo | Bonus por ronda superada |
-|---|---:|
-| 1 | +1 |
-| 2 | +2 |
-| 3 | +3 |
-| 4 | +4 |
+El play-off de acceso a octavos no concede bonus. El bonus se concede a los ocho primeros de la fase liga, a los otros ocho equipos que accedan a octavos y por cada ronda superada desde octavos.
 
-Las rondas son play-offs eliminatorios, octavos, cuartos, semifinal y final.
-Ganar la final también cuenta como superar ronda.
+| Acierto final | Puntos |
+| --- | ---: |
+| Campeon | +10 |
+| Subcampeon | +5 |
+| Pichichi | +7 |
+| Campeon entre los cuatro clubes elegidos | +6 |
 
-## Bonus finales y desempates
+El bonus por acertar al campeon y el bonus por tenerlo entre los cuatro clubes elegidos no se acumulan.
 
-Si se habilitan predicciones finales, los valores del MVP son +10 por campeón,
-+5 por subcampeón, +7 por máximo goleador y +6 si el campeón está entre tus
-cuatro clubes sin haberlo marcado campeón. Los dos bonus de campeón no se
-acumulan.
+## 5. Puntuacion de la quiniela
 
-Los desempates entre participantes se anunciarán antes de la convocatoria. La
-clasificación UEFA no se reutiliza automáticamente para desempatar la porra.
+Se usa el marcador al terminar los 90 minutos. La prorroga y los penaltis no modifican el resultado puntuable.
 
-## Cuota y premios
+| Fase | Marcador exacto | Acierto 1X2 |
+| --- | ---: | ---: |
+| Fase liga desde J2 | 3 | 1 |
+| Play-off | 3 | 1 |
+| Octavos | 6 | 2 |
+| Cuartos | 8 | 3 |
+| Semifinal | 10 | 4 |
+| Final | 12 | 5 |
 
-El diseño del MVP contempla una cuota de 5 EUR y un reparto 80% para primer
-puesto y 20% para segundo. Solo será aplicable si la organización lo confirma
-junto con los plazos de pago de la edición correspondiente.
+El 1X2 acierta victoria local, empate o victoria visitante. Un error suma 0 puntos.
 
-## Fuentes
+## 6. Clasificacion y desempates
 
-Los partidos y los bombos de referencia proceden de UEFA. TheSportsDB se
-mantiene como contraste secundario y enlace de trazabilidad. Las URLs exactas
-están en `data/seed.json` y en la documentación SDD del repositorio.
+La clasificacion general aplica los criterios UEFA definidos para la fase liga. El Premio Quinielista desempata por resultados exactos y, despues, por jornadas ganadas.
