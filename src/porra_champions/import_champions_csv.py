@@ -4,7 +4,7 @@ import argparse
 import csv
 import json
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from .champions import CHAMPIONS_SEASON, UEFA_FIXTURES_URL, UEFA_POTS_URL, uefa_champions_pots
 
@@ -16,7 +16,7 @@ TEAM_ALIASES = {
 
 
 def portable_source_reference(csv_path: Path) -> str:
-    return f"sources/{csv_path.name}"
+    return f"sources/{PureWindowsPath(str(csv_path)).name}"
 
 
 def build_seed(csv_path: Path) -> dict:
