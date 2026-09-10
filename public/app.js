@@ -158,6 +158,9 @@ let rankingSearch = "";
 let rankingSort = "rank";
 let rankingMode = "general";
 let quinielistaRows = [];
+let publicPredictionRows = [];
+let auditRound = "";
+let auditAlias = "";
 let historyAliases = new Set();
 let historyAllSelected = true;
 let historyHoverAlias = "";
@@ -189,10 +192,10 @@ async function boot() {
     supabaseClient = window.supabase.createClient(config.url, config.publishableKey);
     const { data: { user } } = await supabaseClient.auth.getUser();
     currentUser = user;
-    if (user) await loadPrivateData();
+    if (user) { await loadPrivateData(); await loadPublicPredictionAudit(); }
     supabaseClient.auth.onAuthStateChange(async (_event, session) => {
       currentUser = session?.user || null;
-      if (currentUser) await loadPrivateData(); else { ownProfile = null; ownPredictions = {}; }
+      if (currentUser) { await loadPrivateData(); await loadPublicPredictionAudit(); } else { ownProfile = null; ownPredictions = {}; publicPredictionRows = []; }
       if (DATA) render();
     });
   }
@@ -238,6 +241,15 @@ async function loadPrivateData() {
   ownEntry = entry;
   ownPredictions = Object.fromEntries((predictions || []).map((row) => [String(row.match_id), row]));
   playerCatalog = players || [];
+}
+
+async function loadPublicPredictionAudit() {
+  if (!supabaseClient || !currentUser) { publicPredictionRows = []; return; }
+  const { data } = await supabaseClient
+    .from("closed_prediction_audit")
+    .select("alias, match_id, round_code, starts_at, home_team, away_team, status, official_home_score, official_away_score, prediction_home_score, prediction_away_score, confirmed_at")
+    .order("starts_at");
+  publicPredictionRows = data || [];
 }
 
 function normalizePayload(data) {
@@ -583,7 +595,27 @@ function rankingModeTabs() {
 
 function renderQuinielistaRanking() {
   const rows = quinielistaRows.filter((row) => !rankingSearch || normalizeSearch(row.alias).includes(normalizeSearch(rankingSearch)));
-  return `<div class="ranking-title"><div><h2>Premio Quinielista</h2><p class="section-note">Solo cuenta los puntos de pronósticos. Desempates: resultados exactos y jornadas ganadas. El premio equivale al 20% del bote y es acumulable.</p></div></div>${rankingModeTabs()}${rows.length ? `<div class="stack">${rows.map((row, index) => `<article class="ranking-card ${ownProfile?.alias === row.alias ? "current-user" : ""}"><div class="ranking-head"><div class="rank">${row.posicion || index + 1}</div><div><div class="alias">${escapeHtml(row.alias)}</div><div class="ranking-summary"><span class="summary-chip"><b>Exactos</b>${row.resultados_exactos || 0}</span><span class="summary-chip"><b>Jornadas</b>${row.jornadas_ganadas || 0}</span></div></div><div class="score">${row.puntos_quinielista || 0}<span>quiniela</span></div></div></article>`).join("")}</div>` : `<div class="empty">Aún no hay puntos de quiniela finalizados.</div>`}`;
+  return `<div class="ranking-title"><div><h2>Premio Quinielista</h2><p class="section-note">Solo cuenta los puntos de pronósticos. Desempates: resultados exactos y jornadas ganadas. El premio equivale al 20% del bote y es acumulable.</p></div></div>${rankingModeTabs()}${rows.length ? `<div class="stack">${rows.map((row, index) => `<article class="ranking-card ${ownProfile?.alias === row.alias ? "current-user" : ""}"><div class="ranking-head"><div class="rank">${row.posicion || index + 1}</div><div><div class="alias">${escapeHtml(row.alias)}</div><div class="ranking-summary"><span class="summary-chip"><b>Exactos</b>${row.resultados_exactos || 0}</span><span class="summary-chip"><b>Jornadas</b>${row.jornadas_ganadas || 0}</span></div></div><div class="score">${row.puntos_quinielista || 0}<span>quiniela</span></div></div></article>`).join("")}</div>` : `<div class="empty">Aún no hay puntos de quiniela finalizados.</div>`}${renderPredictionAudit()}`;
+}
+
+function renderPredictionAudit() {
+  if (!currentUser) return `<section class="prediction-audit"><h3>Consulta de quinielas</h3><p class="section-note">Inicia sesión para consultar pronósticos ya cerrados.</p></section>`;
+  const rounds = [...new Set(publicPredictionRows.map((row) => row.round_code))];
+  const selectedRound = rounds.includes(auditRound) ? auditRound : rounds[0] || "";
+  const aliases = [...new Set(publicPredictionRows.filter((row) => row.round_code === selectedRound).map((row) => row.alias))].sort((a, b) => a.localeCompare(b, "es"));
+  const selectedAlias = aliases.includes(auditAlias) ? auditAlias : aliases[0] || "";
+  const rows = publicPredictionRows.filter((row) => row.round_code === selectedRound && row.alias === selectedAlias);
+  const roundOptions = rounds.map((round) => `<option value="${escapeAttr(round)}" ${round === selectedRound ? "selected" : ""}>${escapeHtml(predictionRoundLabel(round))}</option>`).join("");
+  const aliasOptions = aliases.map((alias) => `<option value="${escapeAttr(alias)}" ${alias === selectedAlias ? "selected" : ""}>${escapeHtml(alias)}</option>`).join("");
+  const predictions = rows.map((row) => {
+    const match = { ...row, ronda: row.round_code, home_score: row.official_home_score, away_score: row.official_away_score };
+    const prediction = { home_score: row.prediction_home_score, away_score: row.prediction_away_score };
+    const finished = isFinishedMatch(match);
+    const points = predictionScorePoints(prediction, match);
+    const official = finished ? `<span class="audit-official">Resultado ${row.official_home_score}–${row.official_away_score}</span>` : `<span class="audit-official">Pendiente</span>`;
+    return `<article class="audit-match"><div>${teamLabel(row.home_team)}<strong class="audit-score">${row.prediction_home_score}–${row.prediction_away_score}</strong>${teamLabel(row.away_team)}</div><footer>${official}<strong>${row.round_code === "J01" ? "Cortesía · 0 pts" : finished ? `${points} pts` : "Sin puntuar"}</strong></footer></article>`;
+  }).join("");
+  return `<section class="prediction-audit"><div><h3>Consulta de quinielas</h3><p class="section-note">Solo se muestran pronósticos confirmados cuyo plazo ya ha cerrado.</p></div>${rounds.length ? `<div class="audit-filters"><label>Jornada<select data-audit-round>${roundOptions}</select></label><label>Participante<select data-audit-alias>${aliasOptions}</select></label></div><div class="audit-matches">${predictions || "<p class=\"section-note\">No hay pronósticos cerrados para esta selección.</p>"}</div>` : `<p class="section-note">Aún no hay pronósticos cerrados disponibles.</p>`}</section>`;
 }
 
 function renderParticipant(participant, index) {
@@ -1532,6 +1564,15 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-ranking-mode]").forEach((button) => {
     button.addEventListener("click", () => { rankingMode = button.dataset.rankingMode; rankingSearch = ""; render(); });
+  });
+  document.querySelector("[data-audit-round]")?.addEventListener("change", (event) => {
+    auditRound = event.currentTarget.value;
+    auditAlias = "";
+    render();
+  });
+  document.querySelector("[data-audit-alias]")?.addEventListener("change", (event) => {
+    auditAlias = event.currentTarget.value;
+    render();
   });
   document.querySelectorAll("[data-ranking-sort]").forEach((select) => {
     select.addEventListener("change", () => {

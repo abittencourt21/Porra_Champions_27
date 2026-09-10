@@ -46,7 +46,11 @@ KO_CHECKPOINT_ORDER = {"R32": 4, "R16": 5, "QF": 6, "SF": 7, "F": 8}
 
 _RAW_TEAM_ALIASES = {
     "atletico madrid": "atletico de madrid",
+    "bayern munich": "bayern munchen",
     "inter milan": "inter",
+    "rb leipzig": "leipzig",
+    "sab" "ah baku": "sab" "ah",
+    "slavia prague": "slavia praha",
     "argentina": "argentina",
     "algeria": "argelia",
     "argelia": "argelia",
@@ -176,6 +180,8 @@ TEAM_ALIASES = {
     for alias, canonical in _RAW_TEAM_ALIASES.items()
 }
 SPORTSDB_SEARCH_NAMES = {
+    "atletico de madrid": "Atlético Madrid",
+    "bayern munchen": "Bayern Munich",
     "alemania": "Germany",
     "arabia saudi": "Saudi Arabia",
     "argelia": "Algeria",
@@ -197,6 +203,7 @@ SPORTSDB_SEARCH_NAMES = {
     "francia": "France",
     "ghana": "Ghana",
     "inglaterra": "England",
+    "inter": "Inter Milan",
     "irak": "Iraq",
     "iran": "Iran",
     "japon": "Japan",
@@ -208,6 +215,9 @@ SPORTSDB_SEARCH_NAMES = {
     "paises bajos": "Netherlands",
     "panama": "Panama",
     "rd congo": "DR Congo",
+    "leipzig": "RB Leipzig",
+    "sab" "ah": "Sabah Baku",
+    "slavia praha": "Slavia Prague",
     "sudafrica": "South Africa",
     "suecia": "Sweden",
     "suiza": "Switzerland",

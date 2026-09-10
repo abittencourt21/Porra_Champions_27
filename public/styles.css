@@ -423,7 +423,7 @@ main {
 }
 
 .prediction-team { min-width: 0; }
-.prediction-team .team-label { min-width: 0; }
+.prediction-team .team-label { min-width: 0; align-items: center; }
 .prediction-team .team-label > span { min-width: 0; }
 .prediction-team-home { justify-self: end; text-align: right; }
 .prediction-team-home .team-label { flex-direction: row-reverse; }
@@ -454,12 +454,41 @@ main {
 
 @media (max-width: 520px) {
   .prediction-matchup { gap: 6px; }
-  .prediction-team .team-label { align-items: flex-start; gap: 5px; font-size: 12px; line-height: 1.15; }
+  .prediction-team .team-label { align-items: center; gap: 5px; font-size: 12px; line-height: 1.15; }
   .prediction-team .team-label > span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .prediction-team .flag { width: 20px; height: 20px; max-width: 20px; max-height: 20px; flex: 0 0 20px; }
   .prediction-footer { gap: 6px; }
   .prediction-actions { gap: 5px; }
   .prediction-status, .prediction-points, .icon-button { width: 38px; height: 38px; min-width: 38px; min-height: 38px; }
+}
+
+.prediction-audit {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+
+.prediction-audit h3 { margin: 0; }
+.audit-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.audit-filters label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+.audit-filters select { min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; background: var(--surface); color: var(--white); }
+.audit-matches { display: grid; gap: 8px; }
+.audit-match { display: grid; gap: 6px; padding: 10px; border-radius: 10px; background: var(--surface); }
+.audit-match > div { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.audit-match .team-label:first-child { justify-self: start; min-width: 0; }
+.audit-match .team-label:last-child { justify-self: end; min-width: 0; flex-direction: row-reverse; text-align: right; }
+.audit-score { font-size: 16px; white-space: nowrap; }
+.audit-match footer { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
+.audit-match footer strong { color: var(--gold-bright); }
+
+@media (max-width: 520px) {
+  .audit-filters { grid-template-columns: 1fr; }
+  .audit-match .team-label { font-size: 12px; }
+  .audit-match .flag { width: 20px; height: 20px; max-width: 20px; max-height: 20px; }
 }
 
 .prediction-rounds {

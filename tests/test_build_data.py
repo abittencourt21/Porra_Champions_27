@@ -80,6 +80,10 @@ class BuildDataSportsDbTests(unittest.TestCase):
             "Estados Unidos": "United States of America",
             "Inter": "Inter Milan",
             "Atlético de Madrid": "Atlético Madrid",
+            "Bayern München": "Bayern Munich",
+            "Leipzig": "RB Leipzig",
+            "Sabah": "Sabah Baku",
+            "Slavia Praha": "Slavia Prague",
         }
 
         for spanish_name, sportsdb_name in cases.items():
