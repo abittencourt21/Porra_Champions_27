@@ -5,6 +5,8 @@ from porra_champions.build_data import (
     _apply_overrides,
     _enrich_ranking,
     _load_matches,
+    _ranking_checkpoint_id,
+    _should_discover_knockouts,
     _sportsdb_search_event_names,
     _team_key,
 )
@@ -12,17 +14,55 @@ from porra_champions.models import Match
 
 
 class BuildDataSportsDbTests(unittest.TestCase):
+    def test_champions_knockouts_are_discovered_after_matchday_eight(self):
+        seed_matches = [
+            Match(
+                matchid=2594672,
+                group=None,
+                roundnumber=8,
+                ronda="J08",
+                competition_stage="league",
+                fecha="27.01.2027",
+                starts_at="2027-01-27T21:00:00+01:00",
+                home_team="Slovan Bratislava",
+                away_team="Inter",
+            )
+        ]
+
+        self.assertTrue(_should_discover_knockouts(seed_matches, "2027-01-28"))
+
+    def test_ranking_checkpoint_supports_all_champions_matchdays(self):
+        payload = {
+            "partidos": [
+                {
+                    "matchid": 1,
+                    "group": None,
+                    "roundnumber": 4,
+                    "ronda": "J04",
+                    "competition_stage": "league",
+                    "fecha": "03.11.2026",
+                    "home_team": "Real Madrid",
+                    "away_team": "Inter",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "status": "FT",
+                }
+            ]
+        }
+
+        self.assertEqual(_ranking_checkpoint_id(payload, "2026-11-04"), "J4")
+
     def test_load_matches_discovers_and_localizes_knockout_events(self):
         seed = {
             "partidos": [
                 {
-                    "matchid": 72,
-                    "group": "L",
-                    "roundnumber": 3,
-                    "ronda": "grupos",
-                    "fecha": "27.06.2026",
-                    "home_team": "Sudafrica",
-                    "away_team": "Canada",
+                    "matchid": 144,
+                    "group": "",
+                    "roundnumber": 8,
+                    "ronda": "J08",
+                    "fecha": "27.01.2027",
+                    "home_team": "Real Madrid",
+                    "away_team": "Inter Milan",
                     "status": "FT",
                     "home_score": 1,
                     "away_score": 0,
@@ -33,11 +73,11 @@ class BuildDataSportsDbTests(unittest.TestCase):
             "events": [
                 {
                     "idEvent": "2499618",
-                    "strEvent": "South Africa vs Canada",
-                    "strHomeTeam": "South Africa",
-                    "strAwayTeam": "Canada",
+                    "strEvent": "Real Madrid vs Inter Milan",
+                    "strHomeTeam": "Real Madrid",
+                    "strAwayTeam": "Inter Milan",
                     "intRound": "32",
-                    "dateEvent": "2026-06-28",
+                    "dateEvent": "2027-01-28",
                     "strGroup": "",
                     "strStatus": "NS",
                 }
@@ -52,14 +92,14 @@ class BuildDataSportsDbTests(unittest.TestCase):
                 "porra_champions.build_data.fetch_champions_events_for_round",
                 side_effect=[knockout_payload] + [{"events": []}] * 5,
             ):
-                matches, live_used, alerts = _load_matches(seed, build_date="2026-06-28")
+                matches, live_used, alerts = _load_matches(seed, build_date="2027-01-28")
 
         self.assertTrue(live_used)
         self.assertEqual(alerts, [])
         self.assertEqual(len(matches), 2)
         self.assertEqual(matches[1].matchid, 2499618)
         self.assertEqual(matches[1].ronda, "R32")
-        self.assertEqual(matches[1].home_team, "Sudafrica")
+        self.assertEqual(matches[1].home_team, "Real Madrid")
 
     def test_team_key_matches_spanish_accents_and_sportsdb_names(self):
         cases = {
@@ -753,7 +793,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
         patched_matches, patched_meta, goleadores = _apply_overrides(
             matches,
             overrides,
-            {"fuente": "TheSportsDB liga 4429"},
+            {"fuente": "TheSportsDB liga 4480"},
             [],
         )
 
@@ -815,7 +855,7 @@ class BuildDataSportsDbTests(unittest.TestCase):
         self.assertEqual(payload["participantes"][1]["rank_status"], "baja")
         self.assertEqual(
             [row["checkpoint"] for row in payload["meta"]["ranking_checkpoints"]],
-            ["pre", "J1", "J2", "J3", "R32", "R16", "QF", "SF", "F"],
+            ["pre", "J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "R32", "R16", "QF", "SF", "F"],
         )
         self.assertEqual(
             {row["alias"] for row in payload["meta"]["ranking_history"] if row["checkpoint"] == "J1"},

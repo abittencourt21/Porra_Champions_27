@@ -419,15 +419,22 @@ main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
+  min-height: 42px;
   gap: 8px;
 }
 
-.prediction-team { min-width: 0; }
+.prediction-team {
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
 .prediction-team .team-label { min-width: 0; align-items: center; }
 .prediction-team .team-label > span { min-width: 0; }
-.prediction-team-home { justify-self: end; text-align: right; }
+.prediction-team-home { justify-content: flex-end; text-align: right; }
 .prediction-team-home .team-label { flex-direction: row-reverse; }
-.prediction-team-away { justify-self: start; text-align: left; }
+.prediction-team-away { justify-content: flex-start; text-align: left; }
+.prediction-scores { align-self: center; }
 
 .prediction-footer {
   display: grid;
@@ -478,7 +485,7 @@ main {
 .audit-filters select { min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; background: var(--surface); color: var(--white); }
 .audit-matches { display: grid; gap: 8px; }
 .audit-match { display: grid; gap: 6px; padding: 10px; border-radius: 10px; background: var(--surface); }
-.audit-match > div { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.audit-match > div { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; min-height: 42px; gap: 8px; }
 .audit-match .team-label:first-child { justify-self: start; min-width: 0; }
 .audit-match .team-label:last-child { justify-self: end; min-width: 0; flex-direction: row-reverse; text-align: right; }
 .audit-score { font-size: 16px; white-space: nowrap; }

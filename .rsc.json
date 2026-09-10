@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "targets": [
+    "codex"
+  ],
+  "skills": [
+    "bro",
+    "orient",
+    "suggest",
+    "technical-writing"
+  ],
+  "agents": [],
+  "ownSkills": [],
+  "catalogVersion": "1.2.0",
+  "tier": null,
+  "optOuts": []
+}

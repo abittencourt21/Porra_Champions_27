@@ -161,7 +161,7 @@ def _meta_from_any(meta: TournamentMeta | dict[str, Any]) -> TournamentMeta:
         return meta
     return TournamentMeta(
         ultima_actualizacion=meta.get("ultima_actualizacion", ""),
-        fuente=meta.get("fuente", "TheSportsDB liga 4429"),
+        fuente=meta.get("fuente", "TheSportsDB liga 4480"),
         estado_torneo=meta.get("estado_torneo", "pre"),
         campeon=meta.get("campeon", ""),
         subcampeon=meta.get("subcampeon", ""),

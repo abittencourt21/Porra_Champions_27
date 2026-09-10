@@ -1,4 +1,4 @@
-import csv
+import json
 import unittest
 from pathlib import Path
 
@@ -10,14 +10,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class OverridesTemplateTests(unittest.TestCase):
     def test_template_has_safe_editable_match_rows(self):
-        template_path = ROOT / "data" / "overrides_template.csv"
-
-        with template_path.open(encoding="utf-8-sig", newline="") as handle:
-            rows = list(csv.DictReader(handle))
+        seed_path = ROOT / "data" / "champions-2026-27" / "seed.json"
+        seed = json.loads(seed_path.read_text(encoding="utf-8"))
+        rows = build_overrides_template_rows(seed)
 
         match_rows = [row for row in rows if row["type"] == "match"]
 
-        self.assertEqual(len(match_rows), 72)
+        self.assertEqual(len(match_rows), 144)
         self.assertIn("matchid", match_rows[0])
         self.assertIn("home_score_90", match_rows[0])
         self.assertIn("away_score_90", match_rows[0])
