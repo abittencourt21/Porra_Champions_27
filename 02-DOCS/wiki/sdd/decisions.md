@@ -27,3 +27,10 @@ Fix: se corrige la expectativa de la prueba a 3 puntos totales y 0 en ese partid
 - Se aprueba UEFA como fuente canónica de participantes, bombos, calendario y fases de la temporada 2026/27.
 - TheSportsDB queda limitado a contraste y enriquecimiento visual con escudos; cualquier discrepancia prevalece a favor de UEFA.
 - El bonus de acceso a octavos mantiene el valor del bombo: top 8 directo o ganador del play-off desde 9–24; el play-off no concede puntos propios.
+
+## 2026-09-10 — bug: ruta Windows no portable en CI (feature: professionalize-public-repository)
+
+Repro      — `python -m unittest discover -s tests` en Ubuntu convirtió la ruta Windows completa en el nombre de la fuente.
+Cause      — `Path.name` interpreta separadores según el sistema anfitrión y Linux no reconoce `\` como separador.
+Fix        — obtener el nombre mediante `PureWindowsPath` y añadir una prueba que ejecuta el caso Windows bajo semántica POSIX.
+Why missed — la primera prueba usaba `Path` nativo y solo se había ejecutado localmente en Windows.
