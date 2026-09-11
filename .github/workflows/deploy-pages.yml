@@ -57,7 +57,7 @@ jobs:
           node -e 'const fs=require("fs"); fs.writeFileSync("public/supabase-config.js", `window.PORRA_SUPABASE = ${JSON.stringify({url:process.env.SUPABASE_URL,publishableKey:process.env.SUPABASE_PUBLISHABLE_KEY}, null, 2)};\n`);'
 
       - name: Upload site build
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: pages-site
           path: public
@@ -68,7 +68,7 @@ jobs:
         run: tar --dereference --hard-dereference --directory public -cvf "$RUNNER_TEMP/artifact.tar" .
 
       - name: Upload Pages artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: github-pages
           path: ${{ runner.temp }}/artifact.tar
