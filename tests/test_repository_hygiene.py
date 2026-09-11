@@ -61,7 +61,7 @@ class RepositoryHygieneTests(unittest.TestCase):
         self.assertIn("actions/checkout@v7", workflow)
         self.assertIn("actions/setup-python@v7", workflow)
         self.assertIn("actions/setup-node@v6", workflow)
-        self.assertIn("actions/upload-artifact@v6", workflow)
+        self.assertIn("actions/upload-artifact@v7", workflow)
         self.assertIn("actions/download-artifact@v7", workflow)
         self.assertIn("actions/deploy-pages@v5", workflow)
         self.assertNotIn("enablement:", workflow)
