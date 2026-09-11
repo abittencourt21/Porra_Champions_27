@@ -58,7 +58,7 @@ class RepositoryHygieneTests(unittest.TestCase):
 
     def test_deploy_uses_node_24_actions_and_does_not_try_to_enable_pages(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")
-        self.assertIn("actions/checkout@v6", workflow)
+        self.assertIn("actions/checkout@v7", workflow)
         self.assertIn("actions/setup-python@v6", workflow)
         self.assertIn("actions/setup-node@v6", workflow)
         self.assertIn("actions/upload-artifact@v6", workflow)
